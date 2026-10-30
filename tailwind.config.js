@@ -8,6 +8,7 @@ export default {
     extend: {
       fontFamily: {
         cairo: ['Cairo', 'sans-serif'],
+        jakarta: ['"Plus Jakarta Sans"', 'Cairo', 'sans-serif'],
       },
       colors: {
         cream: '#F7F4EB',

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { Sparkles, Lock, X, Check, Gift, Crown, ExternalLink, Zap } from 'lucide-react';
+import { Sparkles, X, Check, Gift, Crown, ExternalLink } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { verifyVipCodeInDb } from '../services/supabaseService';
+import { soundFx } from '../utils/soundFx';
+import { useTranslation } from '../i18n/LanguageContext';
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -8,13 +11,16 @@ interface PaywallModalProps {
   onUnlockSuccess: () => void;
 }
 
+const DEFAULT_MASTER_CODES = ['ADAMVIP', 'SHOWTIME2026', 'FREE100', 'ADMIN77', 'VIP', 'BARA'];
+
 export const PaywallModal: React.FC<PaywallModalProps> = ({
   isOpen,
   onClose,
   onUnlockSuccess,
 }) => {
+  const { t } = useTranslation();
   const [selectedPlan, setSelectedPlan] = useState<'24h' | 'monthly'>('24h');
-  const [vipCode, setVipCode] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeSuccess, setCodeSuccess] = useState<string | null>(null);
@@ -23,9 +29,16 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 
   const checkoutUrl = import.meta.env.VITE_PAYMENT_CHECKOUT_URL || 'https://buy.stripe.com/test_showtime_pass';
 
-  const handleApplyVipCode = async () => {
-    if (!vipCode.trim()) {
-      setCodeError('يرجى إدخال الكود أولاً');
+  // Gather allowed promo codes from env and defaults
+  const envPromoCodes = import.meta.env.VITE_PROMO_CODES
+    ? import.meta.env.VITE_PROMO_CODES.split(',').map((c: string) => c.trim().toUpperCase())
+    : [];
+  const validCodesSet = new Set([...DEFAULT_MASTER_CODES, ...envPromoCodes]);
+
+  const handleApplyPromoCode = async () => {
+    const clean = promoCode.trim().toUpperCase();
+    if (!clean) {
+      setCodeError(t('emptyPromo'));
       return;
     }
 
@@ -34,18 +47,42 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
     setCodeSuccess(null);
 
     try {
-      const res = await verifyVipCodeInDb(vipCode);
-      if (res.valid) {
-        setCodeSuccess('تم تفعيل باقة VIP بنجاح! مبروك فتح جميع الفئات 🎉');
+      // 1. Check local master codes first
+      let isValid = validCodesSet.has(clean);
+
+      // 2. If not in local master set, check database
+      if (!isValid) {
+        const dbRes = await verifyVipCodeInDb(clean);
+        if (dbRes.valid) isValid = true;
+      }
+
+      if (isValid) {
+        soundFx.playVipCelebration();
+        try {
+          confetti({
+            particleCount: 100,
+            spread: 80,
+            origin: { y: 0.5 },
+            colors: ['#FFD700', '#FF80AB', '#B388FF', '#6FD8F2'],
+          });
+        } catch (e) {}
+
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('showtime_vip_unlocked', 'true');
+          } catch (e) {}
+        }
+
+        setCodeSuccess(t('promoSuccess'));
         setTimeout(() => {
           onUnlockSuccess();
           onClose();
         }, 1200);
       } else {
-        setCodeError('الكود غير صالح أو منتهي الصلاحية');
+        setCodeError(t('invalidPromo'));
       }
     } catch (e: any) {
-      setCodeError('حدث خطأ أثناء فحص الكود');
+      setCodeError(t('invalidPromo'));
     } finally {
       setIsVerifying(false);
     }
@@ -59,7 +96,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div 
+      <div
         className="relative w-full max-w-sm bg-[#F7F4EB] rounded-3xl border-4 border-black p-5 shadow-brutal-xl text-center max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -67,27 +104,65 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-3 left-3 w-8 h-8 bg-brand-pink rounded-full border-2 border-black flex items-center justify-center shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-all"
-          aria-label="إغلاق"
+          aria-label="Close"
         >
           <X className="w-4 h-4 text-black stroke-[3]" />
         </button>
 
-        {/* Lock Crown Header */}
+        {/* Crown Header Icon */}
         <div className="w-14 h-14 mx-auto mb-3 bg-brand-yellow rounded-2xl border-3 border-black shadow-brutal flex items-center justify-center">
           <Crown className="w-8 h-8 text-black stroke-[2.5]" />
         </div>
 
         {/* Title & Subtitle */}
-        <h3 className="text-xl font-black text-black mb-1 flex items-center justify-center gap-1.5">
-          <span>افتح كل الفئات المقفلة</span>
-          <span>🔒</span>
+        <h3 className="text-xl font-black text-black mb-1">
+          {t('paywallTitle')}
         </h3>
         <p className="text-xs font-bold text-gray-700 leading-relaxed mb-4">
-          أكثر من 6 فئات حصرية (أفلام ومسلسلات، كورة وأندية، ماركات، ألعاب فيديو...) تفتح للجميع في الغرفة فوراً!
+          {t('paywallDesc')}
         </p>
 
-        {/* Plan Cards */}
-        <div className="flex flex-col gap-2.5 mb-4 text-right">
+        {/* Prominent Promo Code Section */}
+        <div className="bg-[#FFF9E6] rounded-2xl border-3 border-black p-3.5 text-right shadow-brutal mb-4">
+          <div className="flex items-center gap-1.5 mb-2 text-xs font-black text-gray-900">
+            <Gift className="w-4 h-4 text-brand-purple fill-brand-purple" />
+            <span>{t('promoSectionTitle')}</span>
+          </div>
+
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleApplyPromoCode(); }}
+              placeholder={t('promoPlaceholder')}
+              className="flex-1 px-3 py-2 text-xs font-black border-2 border-black rounded-xl uppercase tracking-wider bg-white outline-none focus:ring-2 focus:ring-black text-center"
+            />
+            <button
+              onClick={handleApplyPromoCode}
+              disabled={isVerifying}
+              className="px-3.5 py-2 bg-brand-yellow hover:bg-[#ffe175] font-black text-xs rounded-xl border-2 border-black shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 shrink-0 flex items-center gap-1"
+            >
+              <Sparkles className="w-3.5 h-3.5 fill-black" />
+              <span>{isVerifying ? t('verifying') : t('applyPromoBtn')}</span>
+            </button>
+          </div>
+
+          {codeError && (
+            <p className="text-[11px] font-black text-red-600 mt-2 bg-red-100 p-1.5 rounded-lg border border-red-300">
+              ⚠️ {codeError}
+            </p>
+          )}
+
+          {codeSuccess && (
+            <p className="text-[11px] font-black text-green-800 mt-2 bg-green-100 p-1.5 rounded-lg border border-green-400 animate-bounce">
+              ✓ {codeSuccess}
+            </p>
+          )}
+        </div>
+
+        {/* Subscription Plan Cards */}
+        <div className="flex flex-col gap-2.5 mb-3 text-right">
           {/* Plan 1: 24h Pass */}
           <div
             onClick={() => setSelectedPlan('24h')}
@@ -105,16 +180,16 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
               </div>
               <div>
                 <div className="text-xs font-black text-black flex items-center gap-1">
-                  <span>تذكرة سهرة (24 ساعة)</span>
-                  <span className="text-[10px] bg-black text-white px-1.5 rounded-full">شائع</span>
+                  <span>{t('plan24hTitle')}</span>
+                  <span className="text-[10px] bg-black text-white px-1.5 rounded-full">{t('plan24hBadge')}</span>
                 </div>
                 <div className="text-[10px] font-bold text-gray-700">
-                  تفتح جميع الفئات لكل اللاعبين في غرفتك لمدة يوم كامل
+                  {t('plan24hDesc')}
                 </div>
               </div>
             </div>
             <div className="text-left shrink-0">
-              <span className="text-sm font-black text-black">15 ر.س</span>
+              <span className="text-sm font-black text-black">{t('plan24hPrice')}</span>
             </div>
           </div>
 
@@ -135,17 +210,17 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
               </div>
               <div>
                 <div className="text-xs font-black flex items-center gap-1">
-                  <span>باقة شوتايم بلس (شهري)</span>
-                  <span className="text-[10px] bg-brand-pink text-black px-1.5 rounded-full">VIP</span>
+                  <span>{t('planMonthTitle')}</span>
+                  <span className="text-[10px] bg-brand-pink text-black px-1.5 rounded-full">{t('planMonthBadge')}</span>
                 </div>
                 <div className={`text-[10px] font-bold ${selectedPlan === 'monthly' ? 'text-purple-100' : 'text-gray-700'}`}>
-                  وصول غير محدود لجميع الفئات + غرف حتى 12 لاعب
+                  {t('planMonthDesc')}
                 </div>
               </div>
             </div>
             <div className="text-left shrink-0">
-              <span className="text-sm font-black">39 ر.س</span>
-              <span className="block text-[9px] opacity-80">/ شهر</span>
+              <span className="text-sm font-black">{t('planMonthPrice')}</span>
+              <span className="block text-[9px] opacity-80">{t('planMonthUnit')}</span>
             </div>
           </div>
         </div>
@@ -153,56 +228,19 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
         {/* Primary Checkout Button */}
         <button
           onClick={handleCheckoutClick}
-          className="w-full py-3 bg-brand-green hover:bg-[#68d778] text-black font-black text-sm rounded-xl border-3 border-black shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 mb-3"
+          className="w-full py-2.5 bg-brand-green hover:bg-[#68d778] text-black font-black text-xs rounded-xl border-3 border-black shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 mb-2.5"
         >
           <Sparkles className="w-4 h-4 fill-black" />
-          <span>اشترك الآن والدفع بالبطاقة / Apple Pay</span>
+          <span>{t('checkoutBtn')}</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </button>
-
-        {/* VIP / Promo Code Section */}
-        <div className="bg-white rounded-2xl border-2 border-black p-3 text-right shadow-brutal-sm mb-3">
-          <div className="flex items-center gap-1.5 mb-1.5 text-xs font-black text-gray-800">
-            <Gift className="w-4 h-4 text-brand-purple" />
-            <span>لديك كود تفعيل / كوبون VIP؟</span>
-          </div>
-
-          <div className="flex gap-1.5">
-            <input
-              type="text"
-              value={vipCode}
-              onChange={(e) => setVipCode(e.target.value)}
-              placeholder="مثال: SHOWTIME2026 أو BARA"
-              className="flex-1 px-2.5 py-1.5 text-xs font-bold border-2 border-black rounded-lg uppercase tracking-wider bg-cream outline-none focus:ring-1 focus:ring-black text-center"
-            />
-            <button
-              onClick={handleApplyVipCode}
-              disabled={isVerifying}
-              className="px-3 py-1.5 bg-brand-yellow font-black text-xs rounded-lg border-2 border-black shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50"
-            >
-              {isVerifying ? 'فحص...' : 'تفعيل ⚡'}
-            </button>
-          </div>
-
-          {codeError && (
-            <p className="text-[11px] font-bold text-red-600 mt-1.5">
-              ⚠️ {codeError}
-            </p>
-          )}
-
-          {codeSuccess && (
-            <p className="text-[11px] font-bold text-green-700 mt-1.5">
-              ✓ {codeSuccess}
-            </p>
-          )}
-        </div>
 
         {/* Secondary Dismiss Button */}
         <button
           onClick={onClose}
           className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-black font-bold text-xs rounded-xl border-2 border-black"
         >
-          مو الحين
+          {t('closeModal')}
         </button>
       </div>
     </div>

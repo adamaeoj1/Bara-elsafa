@@ -1,6 +1,7 @@
 import React from 'react';
 import { Player, GamePhase, QuestionPair } from '../types/game';
 import { PlayerPawn } from './PlayerPawn';
+import { useTranslation } from '../i18n/LanguageContext';
 
 interface CharacterStageProps {
   players: Player[];
@@ -19,6 +20,8 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
   caughtImpostorId,
   winner,
 }) => {
+  const { t, language } = useTranslation();
+
   if (!players || players.length === 0) return null;
 
   // Determine if a player is active based on current phase rules
@@ -52,6 +55,8 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
   const topRowPlayers = isMultiRow ? players.slice(0, 3) : players;
   const bottomRowPlayers = isMultiRow ? players.slice(3) : [];
 
+  const youLabel = t('youBadge');
+
   const renderPawn = (player: Player) => {
     const isActive = isPlayerActiveInPhase(player);
     const isAsker = phase === 'QUESTIONS' && currentPair?.askerId === player.id;
@@ -74,7 +79,7 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
           hasVoted={phase === 'VOTING' && player.hasVoted}
           isWinner={isWinnerPawn || isCaught}
           size={isMultiRow ? 'sm' : 'md'}
-          badge={isMe ? 'أنت' : undefined}
+          badge={isMe ? youLabel : undefined}
           className={isMe ? 'ring-2 ring-black rounded-xl p-1 bg-white/50' : ''}
         />
       </div>
@@ -88,10 +93,12 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
         <div className="flex items-center justify-between mb-1.5 px-1 text-[11px] font-black text-gray-700">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-brand-green border border-black animate-pulse" />
-            <span>مسرح اللاعبين المتصلين ({players.length})</span>
+            <span>{t('characterStageTitle', { count: players.length })}</span>
           </span>
           <span className="text-[10px] text-gray-500 font-bold">
-            {phase === 'QUESTIONS' ? 'المشاركون في السؤال ملوّنون' : 'أنت معلم بـ "أنت"'}
+            {phase === 'QUESTIONS'
+              ? t('stageHint')
+              : (language === 'ar' ? `أنت معلم بـ "${youLabel}"` : `You are tagged with "${youLabel}"`)}
           </span>
         </div>
 

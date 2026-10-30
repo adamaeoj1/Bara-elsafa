@@ -65,6 +65,12 @@ export function mapDbRoomToRoomState(dbRoom: any, players: Player[]): RoomState 
     winReason: dbRoom.win_reason || null,
     roundNumber: dbRoom.round_number || 1,
     isPremiumRoom: Boolean(dbRoom.is_premium_room),
+    settings: dbRoom.settings || {
+      timerDuration: 25,
+      impostorCount: 'auto',
+      impostorCategoryHint: true,
+    },
+    customCategory: dbRoom.custom_category || undefined,
   };
 }
 

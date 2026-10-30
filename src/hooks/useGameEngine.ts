@@ -6,9 +6,11 @@ import {
   QuestionPair, 
   PlayerColor, 
   SyncMessage,
-  UserProfile
+  UserProfile,
+  GameSettings,
+  CustomCategory
 } from '../types/game';
-import { CATEGORIES, DEFAULT_CATEGORY_ID, PLAYER_COLORS } from '../data/categories';
+import { CATEGORIES, DEFAULT_CATEGORY_ID, PLAYER_COLORS, getCategoriesWithLockStatus } from '../data/categories';
 import { RealtimeSyncEngine } from '../services/syncEngine';
 import { 
   createRoomInDb, 
@@ -22,6 +24,7 @@ import {
   isSupabaseConfigured,
   testSupabaseConnection
 } from '../services/supabaseService';
+import { soundFx } from '../utils/soundFx';
 
 // Helper to generate UUID
 function generateUUID(): string {
@@ -55,6 +58,12 @@ function loadStoredProfile(): UserProfile {
   return newProfile;
 }
 
+export const DEFAULT_GAME_SETTINGS: GameSettings = {
+  timerDuration: 25,
+  impostorCount: 'auto',
+  impostorCategoryHint: true,
+};
+
 const EMPTY_ROOM_STATE: RoomState = {
   roomCode: '',
   phase: 'LOBBY',
@@ -74,6 +83,7 @@ const EMPTY_ROOM_STATE: RoomState = {
   winReason: null,
   roundNumber: 1,
   isPremiumRoom: false,
+  settings: DEFAULT_GAME_SETTINGS,
 };
 
 export function useGameEngine() {
@@ -81,6 +91,12 @@ export function useGameEngine() {
   const [isInRoom, setIsInRoom] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [isOnline, setIsOnline] = useState<boolean>(false);
+  const [isLocallyVip, setIsLocallyVip] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('showtime_vip_unlocked') === 'true';
+    }
+    return false;
+  });
   const [roomState, setRoomState] = useState<RoomState>(EMPTY_ROOM_STATE);
   const [kickedNotice, setKickedNotice] = useState<string | null>(null);
 
@@ -136,6 +152,8 @@ export function useGameEngine() {
         }
       });
       mapped.votes = votes;
+      mapped.settings = data.room.settings || prev.settings || DEFAULT_GAME_SETTINGS;
+      mapped.customCategory = data.room.custom_category || prev.customCategory;
 
       const amStillIn = data.players.some((p) => p.id === profile.id);
       if (!amStillIn && isInRoom) {
@@ -184,7 +202,6 @@ export function useGameEngine() {
 
           const nextState: RoomState = { ...prev, players: updatedPlayers };
 
-          // If current client is host, save and broadcast back authoritative sync
           if (prev.players.length > 0 && prev.players[0].id === profile.id) {
             engine.saveRoomState(nextState);
             engine.broadcast({
@@ -198,7 +215,6 @@ export function useGameEngine() {
           return nextState;
         });
       } else if (msg.type === 'REQUEST_ROOM_SYNC') {
-        // Send state to newly joined tabs
         setRoomState((prev) => {
           if (prev.roomCode === code) {
             engine.broadcast({
@@ -234,7 +250,9 @@ export function useGameEngine() {
             winner: newRoom.winner || null,
             winReason: newRoom.win_reason || null,
             roundNumber: newRoom.round_number || prev.roundNumber,
-            isPremiumRoom: Boolean(newRoom.is_premium_room),
+            isPremiumRoom: Boolean(newRoom.is_premium_room) || prev.isPremiumRoom,
+            settings: newRoom.settings || prev.settings,
+            customCategory: newRoom.custom_category || prev.customCategory,
           }));
         },
         () => {
@@ -268,6 +286,10 @@ export function useGameEngine() {
                 if (p.hasVoted && p.votedTargetId) votes[p.id] = p.votedTargetId;
               });
               mapped.votes = votes;
+              mapped.settings = data.room.settings || DEFAULT_GAME_SETTINGS;
+              mapped.customCategory = data.room.custom_category;
+              if (isLocallyVip) mapped.isPremiumRoom = true;
+
               setRoomState(mapped);
               setIsInRoom(true);
               bindRealtime(codeToRestore);
@@ -283,6 +305,8 @@ export function useGameEngine() {
         if (raw) {
           const localState = JSON.parse(raw) as RoomState;
           if (localState && localState.roomCode === codeToRestore) {
+            if (isLocallyVip) localState.isPremiumRoom = true;
+            if (!localState.settings) localState.settings = DEFAULT_GAME_SETTINGS;
             setRoomState(localState);
             setIsInRoom(true);
             bindRealtime(codeToRestore);
@@ -302,7 +326,7 @@ export function useGameEngine() {
       if (realtimeUnsubRef.current) realtimeUnsubRef.current();
       if (syncEngineRef.current) syncEngineRef.current.cleanup();
     };
-  }, []);
+  }, [isLocallyVip]);
 
   // Broadcast helper
   const broadcastRoomState = useCallback((state: RoomState) => {
@@ -319,7 +343,7 @@ export function useGameEngine() {
     }
   }, [profile.id]);
 
-  // 1. Create Room (Never gets stuck, always succeeds locally & in Supabase)
+  // 1. Create Room
   const createRoom = useCallback(async (hostName: string, hostColor: PlayerColor) => {
     setIsConnecting(true);
     setKickedNotice(null);
@@ -338,17 +362,17 @@ export function useGameEngine() {
       ...EMPTY_ROOM_STATE,
       roomCode: code,
       players: [hostPlayer],
+      isPremiumRoom: isLocallyVip,
+      settings: DEFAULT_GAME_SETTINGS,
     };
 
     updateProfile({ name: hostName.trim(), color: hostColor });
 
-    // Save locally immediately
     try {
       localStorage.setItem('showtime_active_room', code);
       localStorage.setItem(`showtime_state_${code}`, JSON.stringify(initialRoom));
     } catch (e) {}
 
-    // Save in Supabase if online
     if (isOnline && isSupabaseConfigured()) {
       try {
         await createRoomInDb(code, hostPlayer, DEFAULT_CATEGORY_ID);
@@ -361,9 +385,9 @@ export function useGameEngine() {
     setIsInRoom(true);
     bindRealtime(code);
     setIsConnecting(false);
-  }, [profile.id, updateProfile, bindRealtime, isOnline]);
+  }, [profile.id, updateProfile, bindRealtime, isOnline, isLocallyVip]);
 
-  // 2. Join Room (Gracefully handles Supabase + Local Storage + Fallback Room)
+  // 2. Join Room
   const joinRoom = useCallback(async (code: string, playerName: string, playerColor: PlayerColor) => {
     setIsConnecting(true);
     setKickedNotice(null);
@@ -381,19 +405,19 @@ export function useGameEngine() {
 
     let joinedState: RoomState | null = null;
 
-    // A. Check Supabase first if online
     if (isOnline && isSupabaseConfigured()) {
       try {
         const res = await joinRoomInDb(cleanCode, newPlayer);
         if (res.success && res.room) {
           joinedState = mapDbRoomToRoomState(res.room, res.players || [newPlayer]);
+          if (res.room.settings) joinedState.settings = res.room.settings;
+          if (res.room.custom_category) joinedState.customCategory = res.room.custom_category;
         }
       } catch (err) {
         console.warn('[Showtime] Supabase join error, checking local fallback:', err);
       }
     }
 
-    // B. Check Local Storage fallback (Multi-tab within same browser)
     if (!joinedState) {
       let localSaved: RoomState | null = null;
       try {
@@ -410,11 +434,11 @@ export function useGameEngine() {
         joinedState = {
           ...localSaved,
           players: updatedPlayers,
+          settings: localSaved.settings || DEFAULT_GAME_SETTINGS,
         };
       }
     }
 
-    // C. Graceful Fallback Instance: If room does not exist yet anywhere, create/join instance so user is never blocked!
     if (!joinedState) {
       console.info(`[Showtime] Room ${cleanCode} initialized as local fallback instance.`);
       const fallbackHost: Player = {
@@ -429,10 +453,14 @@ export function useGameEngine() {
         ...EMPTY_ROOM_STATE,
         roomCode: cleanCode,
         players: [fallbackHost],
+        settings: DEFAULT_GAME_SETTINGS,
       };
     }
 
-    // Persist locally
+    if (isLocallyVip) {
+      joinedState.isPremiumRoom = true;
+    }
+
     try {
       localStorage.setItem('showtime_active_room', cleanCode);
       localStorage.setItem(`showtime_state_${cleanCode}`, JSON.stringify(joinedState));
@@ -442,7 +470,6 @@ export function useGameEngine() {
     setIsInRoom(true);
     bindRealtime(cleanCode);
 
-    // Broadcast player join and request sync to existing tabs
     setTimeout(() => {
       if (syncEngineRef.current) {
         syncEngineRef.current.broadcast({
@@ -463,7 +490,7 @@ export function useGameEngine() {
 
     setIsConnecting(false);
     return { success: true };
-  }, [profile.id, updateProfile, bindRealtime, isOnline]);
+  }, [profile.id, updateProfile, bindRealtime, isOnline, isLocallyVip]);
 
   // 3. Leave Room
   const leaveRoom = useCallback(async () => {
@@ -491,7 +518,7 @@ export function useGameEngine() {
     setRoomState(EMPTY_ROOM_STATE);
   }, [roomState.roomCode, profile.id, isOnline]);
 
-  // 4. Kick Player (Host Only)
+  // 4. Kick Player
   const kickPlayer = useCallback(async (playerId: string) => {
     if (!isHost || !roomState.roomCode) return;
 
@@ -516,7 +543,7 @@ export function useGameEngine() {
     broadcastRoomState(updatedState);
   }, [isHost, roomState, profile.id, broadcastRoomState, isOnline]);
 
-  // 5. Select Category (Host Only)
+  // 5. Select Category
   const setCategory = useCallback(async (categoryId: string) => {
     if (!isHost || !roomState.roomCode) return;
 
@@ -530,8 +557,44 @@ export function useGameEngine() {
     broadcastRoomState(next);
   }, [isHost, roomState, broadcastRoomState, isOnline]);
 
-  // 6. Activate VIP Room
+  // 6. Update Game Settings
+  const updateSettings = useCallback(async (newSettings: Partial<GameSettings>) => {
+    if (!isHost || !roomState.roomCode) return;
+
+    const mergedSettings = { ...roomState.settings, ...newSettings };
+    const next = { ...roomState, settings: mergedSettings };
+    broadcastRoomState(next);
+
+    if (isOnline && isSupabaseConfigured()) {
+      try {
+        await updateRoomInDb(roomState.roomCode, { settings: mergedSettings });
+      } catch (e) {}
+    }
+  }, [isHost, roomState, broadcastRoomState, isOnline]);
+
+  // 7. Update Custom Category
+  const updateCustomCategory = useCallback(async (custom: CustomCategory) => {
+    if (!isHost || !roomState.roomCode) return;
+
+    const next = { ...roomState, customCategory: custom };
+    broadcastRoomState(next);
+
+    if (isOnline && isSupabaseConfigured()) {
+      try {
+        await updateRoomInDb(roomState.roomCode, { custom_category: custom });
+      } catch (e) {}
+    }
+  }, [isHost, roomState, broadcastRoomState, isOnline]);
+
+  // 8. Activate VIP Room
   const activateVipRoom = useCallback(async () => {
+    setIsLocallyVip(true);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('showtime_vip_unlocked', 'true');
+      } catch (e) {}
+    }
+
     if (!roomState.roomCode) return;
 
     if (isOnline && isSupabaseConfigured()) {
@@ -565,15 +628,31 @@ export function useGameEngine() {
     return pairs;
   };
 
-  // 7. Start Game (Host Only)
+  // 9. Start Game
   const startGame = useCallback(async () => {
     if (!isHost || roomState.players.length < 3) return;
 
-    const currentCategory = CATEGORIES.find((c) => c.id === roomState.selectedCategoryId) || CATEGORIES[0];
-    const secretWord = currentCategory.words[Math.floor(Math.random() * currentCategory.words.length)];
+    // Pick secret word
+    let secretWord = '';
+    if (roomState.selectedCategoryId === 'custom' && roomState.customCategory && roomState.customCategory.words?.length >= 8) {
+      const words = roomState.customCategory.words;
+      secretWord = words[Math.floor(Math.random() * words.length)];
+    } else {
+      const catList = getCategoriesWithLockStatus(roomState.isPremiumRoom || isLocallyVip);
+      const currentCategory = catList.find((c) => c.id === roomState.selectedCategoryId) || catList[0];
+      secretWord = currentCategory.words[Math.floor(Math.random() * currentCategory.words.length)];
+    }
 
+    // Determine Impostor count based on settings
     const playerCount = roomState.players.length;
-    const impostorCount = playerCount >= 7 ? 2 : 1;
+    let impostorCount = 1;
+    if (roomState.settings?.impostorCount === 'auto') {
+      impostorCount = playerCount >= 7 ? 2 : 1;
+    } else if (typeof roomState.settings?.impostorCount === 'number') {
+      impostorCount = roomState.settings.impostorCount;
+      if (impostorCount === 2 && playerCount < 5) impostorCount = 1;
+      if (impostorCount === 3 && playerCount < 8) impostorCount = playerCount >= 5 ? 2 : 1;
+    }
 
     const indices = Array.from({ length: playerCount }, (_, i) => i).sort(() => Math.random() - 0.5);
     const impostorIndices = new Set(indices.slice(0, impostorCount));
@@ -637,13 +716,14 @@ export function useGameEngine() {
     };
 
     broadcastRoomState(newState);
-  }, [isHost, roomState, broadcastRoomState, isOnline]);
+  }, [isHost, roomState, broadcastRoomState, isOnline, isLocallyVip]);
 
-  // 8. Start Questions (Host Only)
+  // 10. Start Questions
   const startQuestions = useCallback(async () => {
     if (!isHost) return;
 
-    const turnStartedAt = new Date().toISOString();
+    const timerDur = roomState.settings?.timerDuration ?? 25;
+    const turnStartedAt = timerDur > 0 ? new Date().toISOString() : null;
 
     if (isOnline && isSupabaseConfigured()) {
       try {
@@ -660,18 +740,20 @@ export function useGameEngine() {
       phase: 'QUESTIONS',
       currentPairIndex: 0,
       turnStartedAt,
-      questionTimeRemaining: 25,
+      questionTimeRemaining: timerDur,
     };
     broadcastRoomState(newState);
   }, [isHost, roomState, broadcastRoomState, isOnline]);
 
-  // 9. Next Question Pair (Host Only)
+  // 11. Next Question Pair
   const nextQuestionPair = useCallback(async () => {
     if (!isHost) return;
 
+    const timerDur = roomState.settings?.timerDuration ?? 25;
     const nextIndex = roomState.currentPairIndex + 1;
+
     if (nextIndex < roomState.questionPairs.length) {
-      const turnStartedAt = new Date().toISOString();
+      const turnStartedAt = timerDur > 0 ? new Date().toISOString() : null;
 
       if (isOnline && isSupabaseConfigured()) {
         try {
@@ -686,7 +768,7 @@ export function useGameEngine() {
         ...roomState,
         currentPairIndex: nextIndex,
         turnStartedAt,
-        questionTimeRemaining: 25,
+        questionTimeRemaining: timerDur,
       };
       broadcastRoomState(newState);
     } else {
@@ -720,16 +802,26 @@ export function useGameEngine() {
   }, [isHost, roomState, broadcastRoomState, isOnline]);
 
   // Helper: Generate 8 word options for Last Chance
-  const generateLastChanceOptions = (secretWord: string, categoryId: string): string[] => {
-    const cat = CATEGORIES.find((c) => c.id === categoryId) || CATEGORIES[0];
-    const decoys = cat.words.filter((w) => w !== secretWord);
+  const generateLastChanceOptions = (secretWord: string, categoryId: string, custom?: CustomCategory): string[] => {
+    let decoys: string[] = [];
+
+    if (categoryId === 'custom' && custom && custom.words?.length >= 8) {
+      decoys = custom.words.filter((w) => w !== secretWord);
+    } else {
+      const catList = getCategoriesWithLockStatus(true);
+      const cat = catList.find((c) => c.id === categoryId) || catList[0];
+      decoys = cat.words.filter((w) => w !== secretWord);
+    }
+
     const shuffledDecoys = [...decoys].sort(() => Math.random() - 0.5).slice(0, 7);
     return [secretWord, ...shuffledDecoys].sort(() => Math.random() - 0.5);
   };
 
-  // 10. Submit Vote
+  // 12. Submit Vote
   const submitVote = useCallback(async (voterId: string, targetId: string) => {
     if (voterId === targetId) return;
+
+    soundFx.playVoteClick();
 
     const nextVotes = { ...roomState.votes, [voterId]: targetId };
     const updatedPlayers = roomState.players.map((p) =>
@@ -772,7 +864,11 @@ export function useGameEngine() {
 
     if (tiedImpostors.length > 0) {
       const caughtImpostor = tiedImpostors[0];
-      const lastChanceOptions = generateLastChanceOptions(roomState.secretWord, roomState.selectedCategoryId);
+      const lastChanceOptions = generateLastChanceOptions(
+        roomState.secretWord,
+        roomState.selectedCategoryId,
+        roomState.customCategory
+      );
 
       if (isOnline && isSupabaseConfigured()) {
         try {
@@ -797,6 +893,8 @@ export function useGameEngine() {
       };
       broadcastRoomState(lastChanceState);
     } else {
+      soundFx.playVictory();
+
       if (isOnline && isSupabaseConfigured()) {
         try {
           await updatePlayersBatchInDb(updatedPlayers);
@@ -824,9 +922,11 @@ export function useGameEngine() {
     }
   }, [roomState, broadcastRoomState, isOnline]);
 
-  // 11. Impostor Guess
+  // 13. Impostor Guess
   const submitImpostorGuess = useCallback(async (guess: string) => {
     if (roomState.phase !== 'LAST_CHANCE') return;
+
+    soundFx.playVictory();
 
     const isCorrect = guess === roomState.secretWord;
     const winner: 'IMPOSTOR' | 'CIVILIANS' = isCorrect ? 'IMPOSTOR' : 'CIVILIANS';
@@ -853,15 +953,29 @@ export function useGameEngine() {
     broadcastRoomState(finalState);
   }, [roomState, broadcastRoomState, isOnline]);
 
-  // 12. Play Again
+  // 14. Play Again
   const playAgain = useCallback(async () => {
     if (!isHost || roomState.players.length < 3) return;
 
-    const currentCategory = CATEGORIES.find((c) => c.id === roomState.selectedCategoryId) || CATEGORIES[0];
-    const secretWord = currentCategory.words[Math.floor(Math.random() * currentCategory.words.length)];
+    let secretWord = '';
+    if (roomState.selectedCategoryId === 'custom' && roomState.customCategory && roomState.customCategory.words?.length >= 8) {
+      const words = roomState.customCategory.words;
+      secretWord = words[Math.floor(Math.random() * words.length)];
+    } else {
+      const catList = getCategoriesWithLockStatus(roomState.isPremiumRoom || isLocallyVip);
+      const currentCategory = catList.find((c) => c.id === roomState.selectedCategoryId) || catList[0];
+      secretWord = currentCategory.words[Math.floor(Math.random() * currentCategory.words.length)];
+    }
 
     const playerCount = roomState.players.length;
-    const impostorCount = playerCount >= 7 ? 2 : 1;
+    let impostorCount = 1;
+    if (roomState.settings?.impostorCount === 'auto') {
+      impostorCount = playerCount >= 7 ? 2 : 1;
+    } else if (typeof roomState.settings?.impostorCount === 'number') {
+      impostorCount = roomState.settings.impostorCount;
+      if (impostorCount === 2 && playerCount < 5) impostorCount = 1;
+      if (impostorCount === 3 && playerCount < 8) impostorCount = playerCount >= 5 ? 2 : 1;
+    }
 
     const indices = Array.from({ length: playerCount }, (_, i) => i).sort(() => Math.random() - 0.5);
     const impostorIndices = new Set(indices.slice(0, impostorCount));
@@ -927,9 +1041,9 @@ export function useGameEngine() {
     };
 
     broadcastRoomState(newState);
-  }, [isHost, roomState, broadcastRoomState, isOnline]);
+  }, [isHost, roomState, broadcastRoomState, isOnline, isLocallyVip]);
 
-  // 13. Back to Lobby
+  // 15. Back to Lobby
   const backToLobby = useCallback(async () => {
     if (!isHost) return;
 
@@ -979,6 +1093,7 @@ export function useGameEngine() {
     isInRoom,
     isConnecting,
     isOnline,
+    isLocallyVip,
     roomState,
     activePlayerId: profile.id,
     activePlayer,
@@ -990,6 +1105,8 @@ export function useGameEngine() {
     leaveRoom,
     kickPlayer,
     setCategory,
+    updateSettings,
+    updateCustomCategory,
     activateVipRoom,
     startGame,
     startQuestions,

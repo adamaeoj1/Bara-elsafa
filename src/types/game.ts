@@ -33,11 +33,27 @@ export interface QuestionPair {
   answererId: string;
 }
 
+export interface GameSettings {
+  timerDuration: 15 | 25 | 45 | 0; // 0 = no timer (infinite)
+  impostorCount: 'auto' | 1 | 2 | 3;
+  impostorCategoryHint: boolean; // true = impostor sees category name, false = hardcore mode
+}
+
 export interface Category {
   id: string;
-  name: string;
+  nameAr: string;
+  nameEn: string;
+  name: string; // compatibility fallback
   isLocked: boolean;
   icon: string;
+  wordsAr: string[];
+  wordsEn: string[];
+  words: string[]; // compatibility fallback
+}
+
+export interface CustomCategory {
+  name: string;
+  title?: string;
   words: string[];
 }
 
@@ -65,6 +81,8 @@ export interface RoomState {
   winReason: 'ESCAPED' | 'GUESSED_WORD' | 'WRONG_GUESS' | null;
   roundNumber: number;
   isPremiumRoom?: boolean;
+  settings: GameSettings;
+  customCategory?: CustomCategory;
 }
 
 export interface UserProfile {

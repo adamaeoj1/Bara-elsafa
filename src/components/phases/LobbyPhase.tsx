@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Player } from '../../types/game';
+import { Player, GameSettings, CustomCategory } from '../../types/game';
 import { getCategoriesWithLockStatus } from '../../data/categories';
-import { Users, Play, Copy, Check, Share2, Crown, LogOut, UserMinus, Sparkles } from 'lucide-react';
+import { Users, Play, Copy, Check, Share2, LogOut, UserMinus, Sparkles, QrCode } from 'lucide-react';
 import { PlayerPawn } from '../PlayerPawn';
+import { GameSettingsCard } from '../GameSettingsCard';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 interface LobbyPhaseProps {
   roomCode: string;
@@ -11,11 +13,16 @@ interface LobbyPhaseProps {
   selectedCategoryId: string;
   isHost: boolean;
   isPremiumRoom?: boolean;
+  settings: GameSettings;
+  customCategory?: CustomCategory;
   onSelectCategory: (categoryId: string) => void;
   onOpenLockedCategory: () => void;
   onStartGame: () => void;
   onKickPlayer?: (playerId: string) => void;
   onLeaveRoom?: () => void;
+  onOpenQrModal: () => void;
+  onUpdateSettings: (settings: Partial<GameSettings>) => void;
+  onUpdateCustomCategory?: (custom: CustomCategory) => void;
 }
 
 export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
@@ -25,17 +32,23 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
   selectedCategoryId,
   isHost,
   isPremiumRoom = false,
+  settings,
+  customCategory,
   onSelectCategory,
   onOpenLockedCategory,
   onStartGame,
   onKickPlayer,
   onLeaveRoom,
+  onOpenQrModal,
+  onUpdateSettings,
+  onUpdateCustomCategory,
 }) => {
+  const { t, language } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const fullShareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}${window.location.pathname}?room=${roomCode}`
-    : `https://showtime.game/?room=${roomCode}`;
+    : `https://bara-elsafa.vercel.app/?room=${roomCode}`;
 
   const copyShareLink = () => {
     if (navigator.clipboard) {
@@ -47,12 +60,14 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
 
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(
-      `يلا نلعب شوتايم / برا السالفة! مين برا السالفة ومسوي فاهم؟ 🎭\nادخل الغرفة رقم: ${roomCode}\nالرابط المباشر:\n${fullShareUrl}`
+      language === 'ar'
+        ? `يلا نلعب شوتايم / برا السالفة! مين برا السالفة ومسوي فاهم؟ 🎭\nادخل الغرفة رقم: ${roomCode}\nالرابط المباشر:\n${fullShareUrl}`
+        : `Let's play Showtime / Bara Salfa! Who is outside the loop? 🎭\nJoin Room: ${roomCode}\nDirect Link:\n${fullShareUrl}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
-  const categories = getCategoriesWithLockStatus(isPremiumRoom);
+  const categories = getCategoriesWithLockStatus(isPremiumRoom, customCategory, language);
   const canStart = players.length >= 3;
 
   return (
@@ -65,12 +80,12 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
               🎭
             </div>
             <div>
-              <span className="text-[11px] font-bold text-gray-500 block">رمز الغرفة للمشاركة</span>
+              <span className="text-[11px] font-bold text-gray-500 block">{t('roomCodeHeader')}</span>
               <div className="text-2xl font-black tracking-widest text-black flex items-center gap-1.5">
                 <span>{roomCode}</span>
                 {isPremiumRoom && (
                   <span className="text-[10px] bg-brand-purple text-white px-2 py-0.5 rounded-full border border-black font-black">
-                    VIP ★
+                    {t('vipBadge')}
                   </span>
                 )}
               </div>
@@ -81,45 +96,66 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
             <button
               onClick={onLeaveRoom}
               className="p-2 text-gray-500 hover:text-red-600 rounded-xl hover:bg-red-50 text-xs font-bold flex items-center gap-1"
-              title="مغادرة الغرفة"
+              title={t('leaveRoom')}
             >
               <LogOut className="w-4 h-4" />
-              <span>مغادرة</span>
+              <span>{t('leaveRoom')}</span>
             </button>
           )}
         </div>
 
-        {/* Share Buttons Row */}
-        <div className="grid grid-cols-2 gap-2 pt-1 border-t-2 border-black/10">
+        {/* Share Buttons Row: Copy Link, WhatsApp, QR Code */}
+        <div className="grid grid-cols-3 gap-1.5 pt-1 border-t-2 border-black/10">
           <button
             onClick={copyShareLink}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-brand-cyan hover:bg-[#5bc9e4] rounded-xl border-2 border-black font-black text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+            className="flex items-center justify-center gap-1 py-2 px-1.5 bg-brand-cyan hover:bg-[#5bc9e4] rounded-xl border-2 border-black font-black text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all truncate"
           >
-            {copied ? <Check className="w-4 h-4 stroke-[3]" /> : <Copy className="w-4 h-4 stroke-[2.5]" />}
-            <span>{copied ? 'تم نسخ الرابط!' : 'نسخ رابط الغرفة'}</span>
+            {copied ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Copy className="w-3.5 h-3.5 stroke-[2.5]" />}
+            <span className="truncate">{copied ? t('linkCopied') : t('copyLink')}</span>
           </button>
 
           <button
             onClick={shareToWhatsApp}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-brand-green hover:bg-[#68d778] rounded-xl border-2 border-black font-black text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+            className="flex items-center justify-center gap-1 py-2 px-1.5 bg-brand-green hover:bg-[#68d778] rounded-xl border-2 border-black font-black text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all truncate"
           >
-            <Share2 className="w-4 h-4 stroke-[2.5]" />
-            <span>واتساب 💬</span>
+            <Share2 className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span className="truncate">{t('whatsappShare')}</span>
+          </button>
+
+          <button
+            onClick={onOpenQrModal}
+            className="flex items-center justify-center gap-1 py-2 px-1.5 bg-brand-yellow hover:bg-[#ffe175] rounded-xl border-2 border-black font-black text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all truncate"
+          >
+            <QrCode className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span className="truncate">{t('qrCodeBtn')}</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Connected Players List (Real Connected Phones) */}
+      {/* 2. Advanced Game Settings (Host Only) */}
+      {isHost && (
+        <GameSettingsCard
+          settings={settings}
+          playerCount={players.length}
+          isHost={isHost}
+          selectedCategoryId={selectedCategoryId}
+          customCategory={customCategory}
+          onUpdateSettings={onUpdateSettings}
+          onUpdateCustomCategory={onUpdateCustomCategory}
+        />
+      )}
+
+      {/* 3. Connected Players List */}
       <div className="bg-white rounded-3xl border-4 border-black p-4 shadow-brutal">
         <div className="flex items-center justify-between mb-3 border-b-2 border-black/10 pb-2">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-black" />
             <span className="text-sm font-black text-black">
-              اللاعبون الحاضرون ({players.length})
+              {t('connectedPlayers')} ({players.length})
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-500">
-            الحد الأدنى: 3 لاعبين
+            {t('minPlayersNotice')}
           </span>
         </div>
 
@@ -146,26 +182,25 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
                     <span className="text-xs truncate">{p.name}</span>
                     {p.isHost && (
                       <span className="text-[9px] bg-brand-yellow px-1.5 py-0.2 rounded-md border border-black font-black">
-                        المضيف 👑
+                        {t('hostBadge')}
                       </span>
                     )}
                     {isMe && (
                       <span className="text-[10px] text-brand-purple font-black">
-                        (أنت)
+                        ({t('youBadge')})
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Host Kick Button */}
                 {canKick && onKickPlayer && (
                   <button
                     onClick={() => onKickPlayer(p.id)}
                     className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-black rounded-lg border border-red-400 flex items-center gap-1 active:scale-95"
-                    title="طرد اللاعب من الغرفة"
+                    title={t('kickPlayer')}
                   >
                     <UserMinus className="w-3 h-3" />
-                    <span>طرد</span>
+                    <span>{t('kickPlayer')}</span>
                   </button>
                 )}
               </div>
@@ -174,28 +209,28 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
         </div>
       </div>
 
-      {/* 3. Category Selection Carousel / Grid */}
+      {/* 4. 12-Category Grid */}
       <div className="bg-white rounded-3xl border-4 border-black p-4 shadow-brutal">
         <div className="flex items-center justify-between mb-3 border-b-2 border-black/10 pb-2">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-black text-black">
-              اختر السالفة (الفئة)
+              {t('selectCategory')}
             </h2>
             {isPremiumRoom ? (
               <span className="text-[10px] bg-brand-green text-black px-2 py-0.5 rounded-full border border-black font-black flex items-center gap-1">
                 <Sparkles className="w-3 h-3 fill-black" />
-                <span>جميع الـ 10 فئات مفتوحة VIP</span>
+                <span>{t('allVipUnlocked')}</span>
               </span>
             ) : (
               <span className="text-[10px] bg-brand-yellow text-black px-2 py-0.5 rounded-full border border-black font-black">
-                {categories.filter((c) => !c.isLocked).length} فئات مجانية
+                {t('freeCategoriesCount')}
               </span>
             )}
           </div>
 
           {!isHost && (
             <span className="text-[10px] font-bold text-gray-500">
-              اختيار المضيف
+              {t('hostPickNote')}
             </span>
           )}
         </div>
@@ -230,7 +265,7 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
                 <div className="flex-1 truncate">
                   <div className="text-xs font-black truncate">{cat.name}</div>
                   <div className="text-[9px] text-gray-600 font-bold">
-                    {cat.isLocked ? 'باقة VIP 🔒' : `${cat.words.length} كلمة`}
+                    {cat.isLocked ? t('vipCategoryBadge') : t('wordsCount', { count: cat.words.length })}
                   </div>
                 </div>
 
@@ -245,7 +280,7 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
         </div>
       </div>
 
-      {/* 4. Host Start Game Button or Waiting Banner */}
+      {/* 5. Host Start Game Button or Waiting Banner */}
       {isHost ? (
         <div className="flex flex-col gap-2">
           <button
@@ -258,21 +293,21 @@ export const LobbyPhase: React.FC<LobbyPhaseProps> = ({
             }`}
           >
             <Play className="w-5 h-5 fill-current" />
-            <span>ابدأ اللعبة 🎮 ({players.length} لاعبين)</span>
+            <span>{t('startGameBtn', { count: players.length })}</span>
           </button>
           {!canStart && (
             <p className="text-center text-xs font-bold text-red-600 bg-red-50 p-2 rounded-xl border border-red-300">
-              ⚠️ تحتاج إلى 3 لاعبين على الأقل للبدء. شارك رمز الغرفة مع أصدقائك لينضموا!
+              {t('needMorePlayers')}
             </p>
           )}
         </div>
       ) : (
         <div className="bg-[#E0F7FA] border-3 border-black rounded-2xl p-4 text-center shadow-brutal-sm">
           <div className="text-sm font-black text-black mb-1 animate-pulse">
-            بانتظار مضيف الغرفة لبدء اللعبة... ⏳
+            {t('waitingForHost')}
           </div>
           <div className="text-xs text-gray-700 font-bold">
-            المضيف هو الوحيد الذي يستطيع اختيار الفئة والضغط على بدء اللعبة.
+            {t('waitingForHostDesc')}
           </div>
         </div>
       )}

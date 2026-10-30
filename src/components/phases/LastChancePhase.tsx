@@ -1,7 +1,8 @@
 import React from 'react';
 import { Player } from '../../types/game';
-import { Sparkles, Target, AlertTriangle, Eye } from 'lucide-react';
+import { Sparkles, Target, Eye } from 'lucide-react';
 import { PlayerPawn } from '../PlayerPawn';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 interface LastChancePhaseProps {
   caughtImpostorId: string | null;
@@ -18,6 +19,7 @@ export const LastChancePhase: React.FC<LastChancePhaseProps> = ({
   wordOptions,
   onSubmitGuess,
 }) => {
+  const { t } = useTranslation();
   const caughtImpostor = players.find((p) => p.id === caughtImpostorId);
   const isMeCaughtImpostor = activePlayerId === caughtImpostorId;
 
@@ -27,16 +29,16 @@ export const LastChancePhase: React.FC<LastChancePhaseProps> = ({
       <div className="w-full text-center">
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-cyan text-black rounded-full border-2 border-black font-black text-xs shadow-brutal-sm mb-2 animate-bounce">
           <Sparkles className="w-4 h-4 stroke-[3]" />
-          <span>الفرصة الأخيرة</span>
+          <span>{t('lastChanceTitle')}</span>
         </div>
 
         <h2 className="text-xl font-black text-black leading-snug">
-          انكشف {caughtImpostor?.name || 'الإمبوستر'}! 🚨
+          {t('caughtTitle', { name: caughtImpostor?.name || t('impostorLabel') })}
         </h2>
         <p className="text-xs font-bold text-gray-700 mt-1 max-w-[280px] mx-auto">
           {isMeCaughtImpostor
-            ? 'انكشفت! بس لسه عندك فرصة تفوز: خمّن الكلمة الصح من بين الخيارات!'
-            : 'الإمبوستر جالس يختار الكلمة الحين... هل بيعرفها ويفوز؟'}
+            ? t('caughtSubtitleImpostor')
+            : t('caughtSubtitleCivilian')}
         </p>
       </div>
 
@@ -55,7 +57,7 @@ export const LastChancePhase: React.FC<LastChancePhaseProps> = ({
             {caughtImpostor?.name}
           </div>
           <div className="text-xs font-bold text-brand-pink">
-            حصل على أعلى تصويت وتمت الإطاحة به!
+            {t('highestVotesNotice')}
           </div>
         </div>
       </div>
@@ -65,10 +67,10 @@ export const LastChancePhase: React.FC<LastChancePhaseProps> = ({
         <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
           <span className="text-xs font-black text-black flex items-center gap-1">
             <Target className="w-4 h-4 text-brand-purple" />
-            <span>خيارات الكلمات (8 كلمات)</span>
+            <span>{t('wordOptionsTitle')}</span>
           </span>
           <span className="text-[10px] bg-brand-yellow font-black px-2 py-0.5 rounded-full border border-black">
-            اختر كلمة واحدة
+            {t('pickOneWord')}
           </span>
         </div>
 
@@ -97,14 +99,14 @@ export const LastChancePhase: React.FC<LastChancePhaseProps> = ({
         {isMeCaughtImpostor ? (
           <div className="bg-brand-yellow/40 rounded-xl border-2 border-black p-2.5 text-center shadow-brutal-sm">
             <span className="text-xs font-black text-black flex items-center justify-center gap-1.5">
-              <span>🎯 اضغط على الكلمة التي تتوقع أنها السالفة!</span>
+              <span>{t('tapCorrectWord')}</span>
             </span>
           </div>
         ) : (
           <div className="bg-[#E8F5E9] rounded-xl border-2 border-black p-2.5 text-center shadow-brutal-sm">
             <span className="text-xs font-black text-green-900 flex items-center justify-center gap-1.5 animate-pulse">
               <Eye className="w-4 h-4" />
-              <span>أنت في وضع المشاهدة - بانتظار تخمين الإمبوستر...</span>
+              <span>{t('spectatorWaiting')}</span>
             </span>
           </div>
         )}
