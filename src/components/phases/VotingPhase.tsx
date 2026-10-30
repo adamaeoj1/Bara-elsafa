@@ -1,6 +1,6 @@
 import React from 'react';
 import { Player } from '../../types/game';
-import { Vote, CheckCircle, ShieldAlert, Users, ArrowLeft } from 'lucide-react';
+import { Vote, Users, ArrowLeft } from 'lucide-react';
 import { PlayerPawn } from '../PlayerPawn';
 
 interface VotingPhaseProps {
@@ -9,7 +9,6 @@ interface VotingPhaseProps {
   votes: Record<string, string>;
   votingRevealed: boolean;
   onSubmitVote: (voterId: string, targetId: string) => void;
-  onAutoVoteRemaining?: () => void;
 }
 
 export const VotingPhase: React.FC<VotingPhaseProps> = ({
@@ -18,9 +17,7 @@ export const VotingPhase: React.FC<VotingPhaseProps> = ({
   votes,
   votingRevealed,
   onSubmitVote,
-  onAutoVoteRemaining,
 }) => {
-  const activePlayer = players.find((p) => p.id === activePlayerId);
   const myVoteTargetId = votes[activePlayerId];
   const totalVotesCast = Object.keys(votes).length;
   const totalPlayers = players.length;
@@ -44,7 +41,7 @@ export const VotingPhase: React.FC<VotingPhaseProps> = ({
           مين الإمبوستر برأيك؟
         </h2>
         <p className="text-xs font-bold text-gray-600 mt-1 max-w-[280px] mx-auto">
-          تصويتك سري - النتائج تنعرض للكل مرة وحدة بعد اكتمال التصويت!
+          تصويتك سري - النتائج تنعرض للكل مرة وحدة بعد اكتمال الجميع!
         </p>
       </div>
 
@@ -173,7 +170,7 @@ export const VotingPhase: React.FC<VotingPhaseProps> = ({
                       />
                       <span className="truncate max-w-[80px] text-brand-purple">{target.name}</span>
                       <span className="text-[10px] bg-brand-yellow px-1 rounded border border-black">
-                        {voteCounts[target.id] || 0}
+                        {voteCounts[target.id] || 0} أصوات
                       </span>
                     </div>
                   </div>

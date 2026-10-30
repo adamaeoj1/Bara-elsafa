@@ -25,6 +25,7 @@ export interface Player {
   hasVoted?: boolean;
   votedTargetId?: string;
   isReady?: boolean;
+  createdAt?: string;
 }
 
 export interface QuestionPair {
@@ -54,6 +55,7 @@ export interface RoomState {
   currentPairIndex: number;
   questionPairs: QuestionPair[];
   questionTimeRemaining: number;
+  turnStartedAt?: string | null;
   votes: Record<string, string>; // voterId -> targetId
   votingRevealed: boolean;
   caughtImpostorId: string | null;
@@ -62,16 +64,25 @@ export interface RoomState {
   winner: 'IMPOSTOR' | 'CIVILIANS' | null;
   winReason: 'ESCAPED' | 'GUESSED_WORD' | 'WRONG_GUESS' | null;
   roundNumber: number;
+  isPremiumRoom?: boolean;
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  color: PlayerColor;
 }
 
 export type SyncMessageType = 
   | 'ROOM_STATE_SYNC'
   | 'PLAYER_JOIN'
   | 'PLAYER_LEAVE'
+  | 'PLAYER_KICKED'
   | 'SUBMIT_VOTE'
   | 'SUBMIT_GUESS'
   | 'RESET_GAME'
-  | 'NEXT_TURN';
+  | 'NEXT_TURN'
+  | 'PREMIUM_ACTIVATED';
 
 export interface SyncMessage {
   type: SyncMessageType;
@@ -79,10 +90,4 @@ export interface SyncMessage {
   senderId: string;
   timestamp: number;
   payload?: any;
-}
-
-export interface TestLogEntry {
-  step: string;
-  status: 'SUCCESS' | 'FAIL' | 'INFO';
-  detail: string;
 }

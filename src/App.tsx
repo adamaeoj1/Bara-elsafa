@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useGameEngine } from './hooks/useGameEngine';
-import { DevToolbar } from './components/DevToolbar';
+import { WelcomeScreen } from './components/WelcomeScreen';
 import { CharacterStage } from './components/CharacterStage';
-import { LockedCategoryModal } from './components/LockedCategoryModal';
+import { PaywallModal } from './components/PaywallModal';
 import { LobbyPhase } from './components/phases/LobbyPhase';
 import { RoleRevealPhase } from './components/phases/RoleRevealPhase';
 import { QuestionsPhase } from './components/phases/QuestionsPhase';
@@ -10,19 +10,25 @@ import { VotingPhase } from './components/phases/VotingPhase';
 import { LastChancePhase } from './components/phases/LastChancePhase';
 import { GameOverPhase } from './components/phases/GameOverPhase';
 import { CATEGORIES } from './data/categories';
-import { Sparkles, HelpCircle } from 'lucide-react';
+import { LogOut, Sparkles } from 'lucide-react';
 
 export function App() {
   const {
+    profile,
+    isInRoom,
+    isConnecting,
     roomState,
     activePlayerId,
     activePlayer,
     isHost,
-    setActivePlayerId,
+    kickedNotice,
+    updateProfile,
     createRoom,
     joinRoom,
+    leaveRoom,
+    kickPlayer,
     setCategory,
-    setupPreset,
+    activateVipRoom,
     startGame,
     startQuestions,
     nextQuestionPair,
@@ -30,40 +36,55 @@ export function App() {
     submitImpostorGuess,
     playAgain,
     backToLobby,
-    autoVoteAll,
-    runSelfTest,
   } = useGameEngine();
 
-  const [isLockedModalOpen, setIsLockedModalOpen] = useState(false);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [initialRoomFromUrl, setInitialRoomFromUrl] = useState<string>('');
 
-  // Initialize with 4 players preset on first load if room is empty
+  // Extract ?room=XXXX from URL search params on mount
   useEffect(() => {
-    if (roomState.players.length === 0) {
-      setupPreset(4);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get('room');
+      if (roomParam) {
+        setInitialRoomFromUrl(roomParam.trim());
+      }
     }
   }, []);
 
   const activeCategory = CATEGORIES.find((c) => c.id === roomState.selectedCategoryId) || CATEGORIES[0];
   const currentPair = roomState.questionPairs[roomState.currentPairIndex];
 
-  return (
-    <div className="min-h-screen bg-[#F7F4EB] flex flex-col justify-between text-black font-cairo">
-      {/* 1. Top Developer Switcher & E2E Automated Runner */}
-      <DevToolbar
-        players={roomState.players}
-        activePlayerId={activePlayerId}
-        currentPhase={roomState.phase}
-        onSelectPlayer={setActivePlayerId}
-        onAutoVoteAll={autoVoteAll}
-        onRunTest={runSelfTest}
-      />
+  // 1. If not currently in an active room, render the Welcome Onboarding Screen
+  if (!isInRoom) {
+    return (
+      <>
+        {kickedNotice && (
+          <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white font-black text-xs px-4 py-2 rounded-xl border-2 border-black shadow-brutal animate-bounce">
+            ⚠️ {kickedNotice}
+          </div>
+        )}
+        <WelcomeScreen
+          initialRoomCode={initialRoomFromUrl}
+          initialProfile={profile}
+          onUpdateProfile={updateProfile}
+          onCreateRoom={createRoom}
+          onJoinRoom={joinRoom}
+          isConnecting={isConnecting}
+        />
+      </>
+    );
+  }
 
-      {/* 2. Main Mobile Screen Viewport */}
-      <main className="flex-1 flex flex-col justify-between max-w-md w-full mx-auto px-4 py-4">
-        {/* App Title & Status Bar */}
-        <header className="flex items-center justify-between mb-4 border-b-2 border-black/10 pb-2">
+  // 2. Active Game Screen
+  return (
+    <div className="min-h-screen bg-[#F7F4EB] flex flex-col justify-between text-black font-cairo select-none">
+      {/* Main Container */}
+      <main className="flex-1 flex flex-col justify-between max-w-md w-full mx-auto px-4 py-3">
+        {/* Header Bar */}
+        <header className="flex items-center justify-between mb-3 border-b-2 border-black/10 pb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-brand-yellow border-2 border-black shadow-brutal-sm flex items-center justify-center font-black text-sm">
+            <div className="w-8 h-8 rounded-xl bg-brand-yellow border-2 border-black shadow-brutal-sm flex items-center justify-center font-black text-sm">
               🎭
             </div>
             <div>
@@ -77,14 +98,39 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="bg-white px-2.5 py-1 rounded-full border-2 border-black text-[11px] font-black shadow-brutal-sm flex items-center gap-1">
-              <span className="text-gray-500 font-bold">غرفة:</span>
+            {/* VIP Room Badge or Upgrade trigger */}
+            {roomState.isPremiumRoom ? (
+              <span className="bg-brand-purple text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-black shadow-brutal-sm flex items-center gap-1">
+                <Sparkles className="w-3 h-3 fill-white" />
+                <span>VIP</span>
+              </span>
+            ) : (
+              <button
+                onClick={() => setIsPaywallOpen(true)}
+                className="bg-brand-yellow hover:bg-[#ffe175] text-black text-[10px] font-black px-2 py-0.5 rounded-full border border-black shadow-brutal-sm active:translate-x-[1px] flex items-center gap-1"
+                title="فتح الفئات المقفلة"
+              >
+                <span>فتح الفئات 🔒</span>
+              </button>
+            )}
+
+            {/* Room Code Badge */}
+            <div className="bg-white px-2 py-0.5 rounded-full border-2 border-black text-[11px] font-black shadow-brutal-sm">
               <span className="font-mono text-brand-purple">{roomState.roomCode}</span>
             </div>
+
+            {/* Leave Room Button */}
+            <button
+              onClick={leaveRoom}
+              className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg"
+              title="مغادرة الغرفة"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </header>
 
-        {/* 3. Dynamic Phase Views */}
+        {/* Phase Viewport */}
         <div className="flex-1 flex flex-col justify-center my-auto">
           {roomState.phase === 'LOBBY' && (
             <LobbyPhase
@@ -93,12 +139,12 @@ export function App() {
               activePlayerId={activePlayerId}
               selectedCategoryId={roomState.selectedCategoryId}
               isHost={isHost}
+              isPremiumRoom={roomState.isPremiumRoom}
               onSelectCategory={setCategory}
-              onOpenLockedCategory={() => setIsLockedModalOpen(true)}
+              onOpenLockedCategory={() => setIsPaywallOpen(true)}
               onStartGame={startGame}
-              onQuickPreset={setupPreset}
-              onCreateRoom={createRoom}
-              onJoinRoom={joinRoom}
+              onKickPlayer={kickPlayer}
+              onLeaveRoom={leaveRoom}
             />
           )}
 
@@ -118,6 +164,7 @@ export function App() {
               pairIndex={roomState.currentPairIndex}
               totalPairs={roomState.questionPairs.length}
               timeLeft={roomState.questionTimeRemaining}
+              turnStartedAt={roomState.turnStartedAt}
               players={roomState.players}
               isHost={isHost}
               onNextPair={nextQuestionPair}
@@ -131,7 +178,6 @@ export function App() {
               votes={roomState.votes}
               votingRevealed={roomState.votingRevealed}
               onSubmitVote={submitVote}
-              onAutoVoteRemaining={autoVoteAll}
             />
           )}
 
@@ -161,7 +207,7 @@ export function App() {
         </div>
       </main>
 
-      {/* 4. Persistent Character Stage (Bottom Dock) */}
+      {/* Persistent Character Stage (Bottom Dock - Real Connected Players Only) */}
       <CharacterStage
         players={roomState.players}
         activePlayerId={activePlayerId}
@@ -169,16 +215,13 @@ export function App() {
         currentPair={currentPair}
         caughtImpostorId={roomState.caughtImpostorId}
         winner={roomState.winner}
-        onSelectPlayer={setActivePlayerId}
       />
 
-      {/* 5. Neo-Brutalist Locked Category Modal */}
-      <LockedCategoryModal
-        isOpen={isLockedModalOpen}
-        onClose={() => setIsLockedModalOpen(false)}
-        onSubscribe={() => {
-          alert('شكراً لاهتمامك! تم إرسال طلب الاشتراك بنجاح 🎉');
-        }}
+      {/* High-Converting Paywall & VIP Room Unlock Modal */}
+      <PaywallModal
+        isOpen={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+        onUnlockSuccess={activateVipRoom}
       />
     </div>
   );

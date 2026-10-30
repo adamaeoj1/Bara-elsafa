@@ -11,6 +11,7 @@ export const PLAYER_COLORS: { hex: PlayerColor; label: string; name: string }[] 
 ];
 
 export const CATEGORIES: Category[] = [
+  // 1. أكلات (مفتوحة)
   {
     id: 'food',
     name: 'أكلات',
@@ -37,6 +38,7 @@ export const CATEGORIES: Category[] = [
       'لقيمات',
     ],
   },
+  // 2. المجلس (مفتوحة)
   {
     id: 'majlis',
     name: 'المجلس',
@@ -61,6 +63,7 @@ export const CATEGORIES: Category[] = [
       'قهوة عربية',
     ],
   },
+  // 3. أدوات المطبخ (مفتوحة)
   {
     id: 'kitchen_tools',
     name: 'أدوات المطبخ',
@@ -85,6 +88,7 @@ export const CATEGORIES: Category[] = [
       'محمصة',
     ],
   },
+  // 4. البقالة والسوق (مفتوحة)
   {
     id: 'grocery_market',
     name: 'البقالة والسوق',
@@ -109,6 +113,7 @@ export const CATEGORIES: Category[] = [
       'مخلل',
     ],
   },
+  // 5. مدن وقرى سعودية 🔒
   {
     id: 'saudi_cities',
     name: 'مدن وقرى سعودية 🔒',
@@ -131,8 +136,11 @@ export const CATEGORIES: Category[] = [
       'الخبر',
       'الجبيل',
       'ينبع',
+      'عرعر',
+      'الباحة',
     ],
   },
+  // 6. رمضان الخليج 🔒
   {
     id: 'ramadan_gulf',
     name: 'رمضان الخليج 🔒',
@@ -157,6 +165,113 @@ export const CATEGORIES: Category[] = [
       'حلوى بحرينية',
     ],
   },
+  // 7. مسلسلات وأفلام 🔒
+  {
+    id: 'movies_series',
+    name: 'مسلسلات وأفلام 🔒',
+    isLocked: true,
+    icon: '🎬',
+    words: [
+      'طاش ما طاش',
+      'شباب البومب',
+      'العوف',
+      'رشاش',
+      'ساهر الليل',
+      'درب الزلق',
+      'صراع العروش',
+      'بريكنق باد',
+      'سكويد جيم',
+      'باب الحارة',
+      'طريق',
+      'مرايا',
+      'جوكر',
+      'أفاتار',
+      'إنسبشن',
+      'إنترستيلر',
+    ],
+  },
+  // 8. كورة وأندية 🔒
+  {
+    id: 'football_clubs',
+    name: 'كورة وأندية 🔒',
+    isLocked: true,
+    icon: '⚽',
+    words: [
+      'الهلال',
+      'النصر',
+      'الاتحاد',
+      'الأهلي',
+      'الشباب',
+      'ريال مدريد',
+      'برشلونة',
+      'مانشستر سيتي',
+      'ليفربول',
+      'باريس',
+      'كأس العالم',
+      'دوري أبطال أوروبا',
+      'كلاسيكو',
+      'ركلة جزاء',
+      'تسلل',
+      'حذاء ذهبي',
+    ],
+  },
+  // 9. ماركات عالمية 🔒
+  {
+    id: 'global_brands',
+    name: 'ماركات عالمية 🔒',
+    isLocked: true,
+    icon: '🏷️',
+    words: [
+      'أبل',
+      'سامسونج',
+      'نايكي',
+      'أديداس',
+      'غوتشي',
+      'لويس فيتون',
+      'زارا',
+      'تويوتا',
+      'مرسيدس',
+      'تسلا',
+      'رولكس',
+      'ستاربكس',
+      'ماكدونالدز',
+      'شانيل',
+      'ديور',
+      'سوني',
+    ],
+  },
+  // 10. ألعاب فيديو 🔒
+  {
+    id: 'video_games',
+    name: 'ألعاب فيديو 🔒',
+    isLocked: true,
+    icon: '🎮',
+    words: [
+      'فيفا',
+      'ببجي',
+      'فورتنايت',
+      'كول أوف ديوتي',
+      'قراند',
+      'ماينكرافت',
+      'فالورانت',
+      'ليق أوف ليجندز',
+      'إيلدن رينق',
+      'ريد ديد',
+      'كراش',
+      'ماريو',
+      'تيكن',
+      'رزدنت إيفل',
+      'أساسنز كريد',
+      'أوفر ووتش',
+    ],
+  },
 ];
 
 export const DEFAULT_CATEGORY_ID = 'food';
+
+export function getCategoriesWithLockStatus(isPremiumRoom: boolean): Category[] {
+  return CATEGORIES.map((cat) => ({
+    ...cat,
+    isLocked: isPremiumRoom ? false : cat.isLocked,
+  }));
+}
