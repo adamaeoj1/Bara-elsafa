@@ -23,7 +23,7 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
   isHost,
   onStartQuestions,
 }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [isFlipped, setIsFlipped] = useState(false);
 
   // Find partner's name if impostor
@@ -37,17 +37,14 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-[460px] max-w-sm mx-auto w-full gap-5">
+    <div className="flex flex-col items-center justify-between min-h-[460px] max-w-sm mx-auto w-full gap-4 select-none">
       {/* Top Phase Header */}
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-yellow rounded-full border-2 border-black font-black text-xs shadow-brutal-sm mb-2">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-brand-yellow rounded-full border-2 border-black font-black text-xs shadow-brutal-sm mb-1.5">
           <Sparkles className="w-3.5 h-3.5 text-black" />
           <span>{t('secretCardsTitle')}</span>
         </div>
-        <h2 className="text-xl font-black text-black">
-          {t('whoAreYou')}
-        </h2>
-        <p className="text-xs font-bold text-gray-600 mt-1">
+        <p className="text-xs font-bold text-gray-600">
           {t('dontLookNote')}
         </p>
       </div>
@@ -62,7 +59,7 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
             isFlipped ? 'rotate-y-180' : ''
           }`}
         >
-          {/* FRONT OF CARD (Unflipped Purple Card #6D4AFF) */}
+          {/* FRONT OF CARD (Unflipped Card #6D4AFF) */}
           <div className="absolute inset-0 w-full h-full backface-hidden bg-[#6D4AFF] rounded-3xl border-4 border-black p-6 shadow-brutal-xl flex flex-col items-center justify-between text-white">
             <div className="bg-white/20 backdrop-blur-sm border-2 border-white/60 px-3 py-1 rounded-full text-xs font-black">
               {t('secretCardPill')}
@@ -71,7 +68,9 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
             {/* Central '?' Box */}
             <div className="flex flex-col items-center gap-3">
               <div className="w-24 h-24 bg-brand-yellow rounded-2xl border-4 border-black shadow-brutal flex items-center justify-center animate-pulse">
-                <span className="text-5xl font-black text-black">؟</span>
+                <span className="text-5xl font-black text-black">
+                  {language === 'ar' ? '؟' : '?'}
+                </span>
               </div>
               <span className="text-sm font-black text-center text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
                 {t('tapToReveal')}
@@ -80,7 +79,7 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
 
             <div className="flex items-center gap-1.5 text-xs font-bold bg-black/30 px-3 py-1.5 rounded-xl border border-white/30">
               <Eye className="w-4 h-4 text-brand-yellow" />
-              <span>{t('tapToFlip')}</span>
+              <span>{t('tapToReveal')}</span>
             </div>
           </div>
 
@@ -90,10 +89,10 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
               /* IMPOSTOR VIEW */
               <div className="flex flex-col items-center justify-between h-full w-full py-1">
                 <div className="w-full bg-brand-pink border-2 border-black rounded-xl py-1.5 px-3 text-center shadow-brutal-sm">
-                  <span className="text-xs font-black text-black">{t('wantedNotice')}</span>
+                  <span className="text-xs font-black text-black">{t('youAreImpostor')}</span>
                 </div>
 
-                <div className="flex flex-col items-center gap-1.5 my-auto">
+                <div className="flex flex-col items-center gap-2 my-auto">
                   <div className="w-16 h-16 bg-brand-pink/30 rounded-2xl border-3 border-black shadow-brutal flex items-center justify-center">
                     <ShieldAlert className="w-10 h-10 text-[#D81B60] stroke-[2.5]" />
                   </div>
@@ -102,27 +101,22 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
                     {player.name}
                   </h3>
 
-                  <div className="bg-black text-white px-3 py-0.5 rounded-full text-xs font-black">
-                    {t('youAreImpostor')}
-                  </div>
-
-                  <p className="text-[11px] font-bold text-gray-700 text-center max-w-[220px] leading-relaxed">
+                  <p className="text-[11px] font-black text-gray-800 text-center max-w-[240px] leading-relaxed">
                     {t('impostorDesc')}
                   </p>
 
-                  {/* Optional Category Hint */}
+                  {/* Optional Topic Hint */}
                   {impostorCategoryHint && categoryName && (
-                    <div className="bg-brand-cyan/20 border border-brand-cyan px-2.5 py-0.5 rounded-lg text-[10px] font-bold text-cyan-900 flex items-center gap-1">
+                    <div className="bg-brand-cyan/20 border-2 border-brand-cyan px-2.5 py-0.5 rounded-lg text-[10px] font-black text-cyan-900 flex items-center gap-1">
                       <Tag className="w-3 h-3" />
                       <span>{categoryName}</span>
                     </div>
                   )}
 
-                  {/* Co-aware Impostor Partner Badge */}
+                  {/* Partner Badge */}
                   {partner && (
                     <div className="bg-brand-yellow px-2.5 py-1 rounded-xl border-2 border-black shadow-brutal-sm text-[11px] font-black text-black flex items-center gap-1 animate-bounce">
-                      <span>🤝 {t('impostorPartner')}</span>
-                      <span className="underline">{partner.name}</span>
+                      <span>🤝 {t('impostorPartner', { name: partner.name })}</span>
                     </div>
                   )}
                 </div>
@@ -144,11 +138,11 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
                     {t('wordIs')}
                   </span>
 
-                  <div className="bg-[#6D4AFF] text-white px-5 py-3.5 rounded-2xl border-3 border-black shadow-brutal text-2xl font-black text-center min-w-[190px] tracking-wide">
+                  <div className="bg-[#6D4AFF] text-white px-5 py-3 rounded-2xl border-3 border-black shadow-brutal text-2xl font-black text-center min-w-[190px] tracking-wide">
                     {secretWord}
                   </div>
 
-                  <p className="text-xs font-bold text-gray-600 text-center max-w-[220px] leading-relaxed mt-1">
+                  <p className="text-xs font-bold text-gray-600 text-center max-w-[230px] leading-relaxed mt-1">
                     {t('civilianDesc')}
                   </p>
                 </div>
@@ -164,11 +158,11 @@ export const RoleRevealPhase: React.FC<RoleRevealPhaseProps> = ({
       </div>
 
       {/* Host Controls or Waiting Notice */}
-      <div className="w-full mt-2">
+      <div className="w-full mt-1">
         {isHost ? (
           <button
             onClick={onStartQuestions}
-            className="w-full py-3.5 bg-brand-purple hover:bg-[#5b3adb] text-white font-black text-base rounded-2xl border-3 border-black shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-brand-purple hover:bg-[#5b3adb] text-white font-black text-base rounded-2xl border-3 border-black shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>{t('startQuestionsBtn')}</span>
             <ArrowLeft className="w-5 h-5 stroke-[3] rtl:rotate-0 ltr:rotate-180" />

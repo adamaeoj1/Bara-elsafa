@@ -56,42 +56,42 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 left-3 w-8 h-8 bg-brand-pink rounded-full border-2 border-black flex items-center justify-center shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-all"
+          className="absolute top-3 end-3 w-8 h-8 bg-brand-pink rounded-full border-2 border-black flex items-center justify-center shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
           aria-label="Close"
         >
           <X className="w-4 h-4 text-black stroke-[3]" />
         </button>
 
         {/* Header Icon */}
-        <div className="w-14 h-14 mx-auto mb-3 bg-brand-cyan rounded-2xl border-3 border-black shadow-brutal flex items-center justify-center">
-          <QrCode className="w-8 h-8 text-black stroke-[2.5]" />
+        <div className="w-12 h-12 mx-auto mb-2 bg-brand-cyan rounded-2xl border-3 border-black shadow-brutal flex items-center justify-center">
+          <QrCode className="w-7 h-7 text-black stroke-[2.5]" />
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-black text-black mb-1">
+        <h3 className="text-lg font-black text-black mb-1">
           {t('qrModalTitle')}
         </h3>
-        <p className="text-xs font-bold text-gray-700 leading-relaxed mb-4 px-2">
+        <p className="text-xs font-bold text-gray-700 leading-relaxed mb-3 px-2">
           {t('qrModalDesc')}
         </p>
 
         {/* Scannable QR Code Card */}
-        <div className="bg-white p-3.5 rounded-2xl border-3 border-black shadow-brutal max-w-[260px] mx-auto mb-4 flex flex-col items-center justify-center">
+        <div className="bg-white p-3 rounded-2xl border-3 border-black shadow-brutal max-w-[240px] mx-auto mb-3 flex flex-col items-center justify-center">
           {qrDataUrl ? (
             <img
               src={qrDataUrl}
               alt={`QR Code for room ${roomCode}`}
-              className="w-56 h-56 rounded-lg select-none"
+              className="w-48 h-48 rounded-lg select-none"
             />
           ) : (
-            <div className="w-56 h-56 flex items-center justify-center text-xs font-bold text-gray-400 animate-pulse">
+            <div className="w-48 h-48 flex items-center justify-center text-xs font-bold text-gray-400 animate-pulse">
               Generating QR...
             </div>
           )}
 
           <div className="mt-2 text-center">
-            <span className="text-[11px] font-black text-gray-500 block">
-              {t('roomLabel')}
+            <span className="text-[10px] font-black text-gray-500 block">
+              {t('roomCodeHeader')}
             </span>
             <span className="text-2xl font-black font-mono tracking-widest text-brand-purple">
               {roomCode}

@@ -50,7 +50,7 @@ export function mapDbRoomToRoomState(dbRoom: any, players: Player[]): RoomState 
     roomCode: dbRoom.code,
     phase: (dbRoom.phase as GamePhase) || 'LOBBY',
     players,
-    selectedCategoryId: dbRoom.selected_category_id || 'food',
+    selectedCategoryId: dbRoom.selected_category_id || 'moroccan_food',
     secretWord: dbRoom.secret_word || '',
     currentPairIndex: dbRoom.current_pair_index || 0,
     questionPairs: Array.isArray(dbRoom.question_pairs) ? dbRoom.question_pairs : [],

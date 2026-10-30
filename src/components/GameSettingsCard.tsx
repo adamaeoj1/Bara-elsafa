@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GameSettings, CustomCategory } from '../types/game';
-import { Settings, Clock, Users, Eye, EyeOff, ChevronDown, ChevronUp, Edit3 } from 'lucide-react';
+import { Clock, Users, Eye, EyeOff, ChevronDown, ChevronUp, Edit3 } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 interface GameSettingsCardProps {
@@ -22,9 +22,9 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
   onUpdateSettings,
   onUpdateCustomCategory,
 }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [customName, setCustomName] = useState(customCategory?.name || '');
+  const [customName, setCustomName] = useState(customCategory?.name || customCategory?.title || '');
   const [customWordsText, setCustomWordsText] = useState(customCategory?.words?.join('، ') || '');
 
   const isCustomCategorySelected = selectedCategoryId === 'custom';
@@ -37,7 +37,8 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
       .filter((w) => w.length > 0);
 
     onUpdateCustomCategory({
-      name: customName.trim() || 'فئة خاصة',
+      name: customName.trim() || (language === 'ar' ? 'فئة خاصة' : 'Custom Topic'),
+      title: customName.trim() || (language === 'ar' ? 'فئة خاصة' : 'Custom Topic'),
       words: words.length >= 8 ? words : [
         'كلمة 1', 'كلمة 2', 'كلمة 3', 'كلمة 4',
         'كلمة 5', 'كلمة 6', 'كلمة 7', 'كلمة 8'
@@ -47,37 +48,42 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
 
   if (!isHost) return null;
 
+  // Clean summary string (e.g., "25ث • تلقائي" or "25s • Auto")
+  const timerSummary = settings.timerDuration === 0 ? '∞' : `${settings.timerDuration}${language === 'ar' ? 'ث' : 's'}`;
+  const impSummary = settings.impostorCount === 'auto'
+    ? (language === 'ar' ? 'تلقائي' : 'Auto')
+    : `${settings.impostorCount} ${language === 'ar' ? 'إمبوستر' : 'Imp'}`;
+
   return (
-    <div className="bg-white rounded-3xl border-4 border-black p-4 shadow-brutal transition-all">
+    <div className="bg-white rounded-3xl border-3 sm:border-4 border-black p-3.5 shadow-brutal transition-all">
       {/* Header Toggle */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between font-black text-sm text-black select-none"
+        className="w-full flex items-center justify-between font-black text-xs sm:text-sm text-black select-none cursor-pointer"
       >
         <div className="flex items-center gap-2">
-          <Settings className="w-4 h-4 text-brand-purple" />
           <span>{t('settingsTitle')}</span>
-          <span className="text-[10px] bg-brand-yellow px-2 py-0.5 rounded-full border border-black font-black">
-            {settings.timerDuration === 0 ? t('timerInf') : `${settings.timerDuration}s`} • {settings.impostorCount === 'auto' ? t('impAuto') : `${settings.impostorCount} Imp`}
+          <span className="text-[10px] bg-brand-yellow px-2 py-0.5 rounded-full border border-black font-black whitespace-nowrap">
+            {timerSummary} • {impSummary}
           </span>
         </div>
-        {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        {isOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
       </button>
 
       {/* Expanded Content */}
       {isOpen && (
-        <div className="mt-4 pt-3 border-t-2 border-black/10 flex flex-col gap-4 text-right animate-fade-in">
+        <div className="mt-3 pt-3 border-t-2 border-black/10 flex flex-col gap-3 text-start animate-fade-in">
           {/* 1. Turn Timer Duration */}
           <div>
-            <label className="text-xs font-black text-gray-800 flex items-center gap-1.5 mb-2">
+            <label className="text-[11px] font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
               <Clock className="w-3.5 h-3.5 text-brand-cyan" />
               <span>{t('timerDurationLabel')}</span>
             </label>
             <div className="grid grid-cols-4 gap-1.5">
               {[
-                { val: 15, label: '15s' },
-                { val: 25, label: '25s' },
-                { val: 45, label: '45s' },
+                { val: 15, label: language === 'ar' ? '15ث' : '15s' },
+                { val: 25, label: language === 'ar' ? '25ث' : '25s' },
+                { val: 45, label: language === 'ar' ? '45ث' : '45s' },
                 { val: 0, label: '∞' },
               ].map(({ val, label }) => {
                 const isSelected = settings.timerDuration === val;
@@ -101,13 +107,13 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
 
           {/* 2. Impostor Count */}
           <div>
-            <label className="text-xs font-black text-gray-800 flex items-center gap-1.5 mb-2">
+            <label className="text-[11px] font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
               <Users className="w-3.5 h-3.5 text-brand-pink" />
               <span>{t('impostorCountLabel')}</span>
             </label>
             <div className="grid grid-cols-4 gap-1.5">
               {[
-                { val: 'auto', label: t('impAuto'), min: 3 },
+                { val: 'auto', label: language === 'ar' ? 'تلقائي' : 'Auto', min: 3 },
                 { val: 1, label: '1', min: 3 },
                 { val: 2, label: '2', min: 5 },
                 { val: 3, label: '3', min: 8 },
@@ -128,7 +134,7 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
                         ? 'bg-brand-pink text-black shadow-brutal-sm scale-[1.02]'
                         : 'bg-[#FAF8F5] text-gray-700 hover:bg-gray-100'
                     }`}
-                    title={!isEligible ? `يحتاج ${min} لاعبين على الأقل` : undefined}
+                    title={!isEligible ? (language === 'ar' ? `يحتاج ${min} لاعبين على الأقل` : `Requires ${min}+ players`) : undefined}
                   >
                     {label}
                   </button>
@@ -139,7 +145,7 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
 
           {/* 3. Impostor Category Hint Toggle */}
           <div>
-            <label className="text-xs font-black text-gray-800 flex items-center gap-1.5 mb-2">
+            <label className="text-[11px] font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
               {settings.impostorCategoryHint ? (
                 <Eye className="w-3.5 h-3.5 text-brand-green" />
               ) : (
@@ -150,15 +156,17 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
             <button
               type="button"
               onClick={() => onUpdateSettings({ impostorCategoryHint: !settings.impostorCategoryHint })}
-              className={`w-full p-2.5 rounded-xl border-2 border-black text-xs font-black transition-all flex items-center justify-between ${
+              className={`w-full p-2 rounded-xl border-2 border-black text-xs font-black transition-all flex items-center justify-between ${
                 settings.impostorCategoryHint
                   ? 'bg-brand-green/20 border-black text-green-900 shadow-brutal-sm'
                   : 'bg-red-50 border-red-500 text-red-700 shadow-brutal-sm'
               }`}
             >
               <span>{settings.impostorCategoryHint ? t('impostorHintOn') : t('impostorHintOff')}</span>
-              <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-black">
-                {settings.impostorCategoryHint ? '✓ تلميح مفعّل' : '💀 الوضع الصعب'}
+              <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-black font-black">
+                {settings.impostorCategoryHint 
+                  ? (language === 'ar' ? '✓ تلميح مفعّل' : '✓ Normal') 
+                  : (language === 'ar' ? '💀 الوضع الصعب' : '💀 Hardcore')}
               </span>
             </button>
           </div>
@@ -175,7 +183,7 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 onBlur={handleCustomCategorySave}
-                placeholder="مثال: شباب الشلة / معالم الكويت"
+                placeholder={language === 'ar' ? 'مثال: أسماء أصحابنا / ذكريات الصيف' : 'e.g. Friends Nicknames / Campus Spots'}
                 className="w-full px-2.5 py-1.5 text-xs font-bold bg-white border-2 border-black rounded-lg outline-none"
               />
 
@@ -190,9 +198,6 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
                 placeholder={t('customCatPlaceholder')}
                 className="w-full px-2.5 py-1.5 text-xs font-bold bg-white border-2 border-black rounded-lg outline-none resize-none"
               />
-              <span className="text-[10px] text-gray-500 font-bold">
-                * أدخل 8 كلمات على الأقل مفصولة بفواصل
-              </span>
             </div>
           )}
         </div>

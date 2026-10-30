@@ -98,7 +98,7 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
           <span className="text-[10px] text-gray-500 font-bold">
             {phase === 'QUESTIONS'
               ? t('stageHint')
-              : (language === 'ar' ? `أنت معلم بـ "${youLabel}"` : `You are tagged with "${youLabel}"`)}
+              : (language === 'ar' ? `أنت معلّم بـ "${youLabel}"` : `You are marked with "${youLabel}"`)}
           </span>
         </div>
 

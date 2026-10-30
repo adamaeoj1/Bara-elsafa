@@ -11,132 +11,157 @@ export const PLAYER_COLORS: { hex: PlayerColor; labelAr: string; labelEn: string
 ];
 
 export const CATEGORIES: Category[] = [
-  // 1. Food & Dishes (Free)
+  // 1. Moroccan & Global Food (Free)
   {
-    id: 'food',
-    nameAr: 'أكلات',
-    nameEn: 'Food & Dishes',
-    name: 'أكلات',
+    id: 'moroccan_food',
+    nameAr: 'الأكل المغربي والعالمي',
+    nameEn: 'Moroccan & Global Food',
+    name: 'الأكل المغربي والعالمي',
     isLocked: false,
-    icon: '🍔',
+    icon: '🥘',
     wordsAr: [
-      'كبسة', 'شاورما', 'برغر', 'بيتزا', 'باستا', 'مشاوي', 'تميس', 'ناتشوز',
-      'مندي', 'فلافل', 'سوشي', 'باشميل', 'كشري', 'مسخن', 'مقلوبة', 'سمبوسة',
-      'كنافة', 'لقيمات', 'برياني', 'تاكو', 'ورق عنب', 'حمص', 'شيش طاووق'
+      'كسكس', 'طاجين', 'حريرة', 'بسطيلة', 'مسمن', 'بغرير', 'طنجية', 'رفيسة',
+      'شباكية', 'بريوات', 'زعلوك', 'سفنج', 'كبسة', 'شاورما', 'بيتزا', 'برغر',
+      'سوشي', 'تاكو', 'باستا', 'لازانيا', 'كرواسون', 'مشاوي'
     ],
     wordsEn: [
-      'Burger', 'Pizza', 'Shawarma', 'Pasta', 'Sushi', 'Tacos', 'Nachos', 'Steak',
-      'Biryani', 'Falafel', 'Fried Chicken', 'Lasagna', 'Pancake', 'Waffles', 'Donut',
-      'Ice Cream', 'Salad', 'Barbecue', 'Cheesecake', 'Noodles', 'Sandwich', 'Crepe'
+      'Couscous', 'Tagine', 'Harira Soup', 'Pastilla', 'Msemen', 'Baghrir', 'Tangia', 'Rfissa',
+      'Chebakia', 'Briouat', 'Zaalouk', 'Sfenj', 'Shawarma', 'Pizza', 'Burger', 'Sushi',
+      'Tacos', 'Pasta', 'Lasagna', 'Croissant', 'Barbecue', 'Paella'
     ],
     words: [
-      'كبسة', 'شاورما', 'برغر', 'بيتزا', 'باستا', 'مشاوي', 'تميس', 'ناتشوز',
-      'مندي', 'فلافل', 'سوشي', 'باشميل', 'كشري', 'مسخن', 'مقلوبة', 'سمبوسة',
-      'كنافة', 'لقيمات', 'برياني', 'تاكو', 'ورق عنب', 'حمص', 'شيش طاووق'
+      'كسكس', 'طاجين', 'حريرة', 'بسطيلة', 'مسمن', 'بغرير', 'طنجية', 'رفيسة',
+      'شباكية', 'بريوات', 'زعلوك', 'سفنج', 'كبسة', 'شاورما', 'بيتزا', 'برغر',
+      'سوشي', 'تاكو', 'باستا', 'لازانيا', 'كرواسون', 'مشاوي'
     ],
   },
 
-  // 2. Majlis & Hangout (Free)
+  // 2. Moroccan Hangout & Vibes (Free)
   {
-    id: 'majlis',
-    nameAr: 'المجلس والحياة اليومية',
-    nameEn: 'Home & Hangout',
-    name: 'المجلس والحياة اليومية',
+    id: 'moroccan_vibes',
+    nameAr: 'الجلسة والدارجة المغربية',
+    nameEn: 'Moroccan Hangout & Vibes',
+    name: 'الجلسة والدارجة المغربية',
     isLocked: false,
-    icon: '☕',
+    icon: '🫖',
     wordsAr: [
-      'دلة', 'فنجال', 'تمر', 'بلوت', 'مبخرة', 'مسند', 'زولية', 'عود',
-      'سبحة', 'بشت', 'شبة نار', 'صينية', 'ترامس', 'كيرم', 'ضيافة', 'قهوة عربية',
-      'شاهي نعناع', 'مكسرات', 'تكيئة', 'ريموت', 'شاحن', 'سماعات'
+      'أتاي بالنعناع', 'البراد', 'صينية', 'كعب غزال', 'الفقاص', 'جلابة', 'طربوش', 'بلغة',
+      'القفطان', 'الدربوكة', 'كناوة', 'الحمام المغربي', 'الصابون البلدي', 'السداري', 'الصالون المغربي', 'المجامر',
+      'العود', 'الكارطة (رامي)', 'بارتشي', 'الباسبور', 'الحناء', 'زيت أركان'
     ],
     wordsEn: [
-      'Coffee Table', 'Sofa', 'Cards Game', 'Incense', 'Carpet', 'Cushion', 'Fireplace',
-      'Teapot', 'Board Game', 'Hospitality', 'Green Tea', 'Snacks', 'TV Remote', 'Headphones',
-      'Slippers', 'Blanket', 'Pillow', 'Doorbell', 'Keyring', 'Flashlight', 'Candle'
+      'Moroccan Mint Tea', 'Teapot (Berrad)', 'Kaab Ghzal', 'Fekkas', 'Djellaba', 'Fez Hat (Tarbouch)', 'Babouche Shoes', 'Kaftan',
+      'Darbuka Drum', 'Gnawa Music', 'Traditional Hammam', 'Beldi Soap', 'Moroccan Salon', 'Incense Burner', 'Playing Cards (Rami)', 'Parcheesi (Ludo)',
+      'Henna', 'Argan Oil', 'Couscous Steamer', 'Carpet', 'Cushion', 'Handmade Tajine'
     ],
     words: [
-      'دلة', 'فنجال', 'تمر', 'بلوت', 'مبخرة', 'مسند', 'زولية', 'عود',
-      'سبحة', 'بشت', 'شبة نار', 'صينية', 'ترامس', 'كيرم', 'ضيافة', 'قهوة عربية',
-      'شاهي نعناع', 'مكسرات', 'تكيئة', 'ريموت', 'شاحن', 'سماعات'
+      'أتاي بالنعناع', 'البراد', 'صينية', 'كعب غزال', 'الفقاص', 'جلابة', 'طربوش', 'بلغة',
+      'القفطان', 'الدربوكة', 'كناوة', 'الحمام المغربي', 'الصابون البلدي', 'السداري', 'الصالون المغربي', 'المجامر',
+      'العود', 'الكارطة (رامي)', 'بارتشي', 'الباسبور', 'الحناء', 'زيت أركان'
     ],
   },
 
-  // 3. Kitchen Tools (Free)
+  // 3. Morocco Cities & Spots (Free)
   {
-    id: 'kitchen',
-    nameAr: 'أدوات المطبخ',
-    nameEn: 'Kitchen Tools',
-    name: 'أدوات المطبخ',
+    id: 'morocco_places',
+    nameAr: 'مدن ومعالم المغرب',
+    nameEn: 'Morocco Cities & Spots',
+    name: 'مدن ومعالم المغرب',
     isLocked: false,
-    icon: '🍳',
+    icon: '📍',
     wordsAr: [
-      'خلاط', 'مقلاة', 'قدر', 'شوكة', 'مبشرة', 'ثلاجة', 'فرن', 'غلاية',
-      'ميكروويف', 'ملعقة', 'سكين', 'صفاية', 'صحن', 'قطاعة', 'قلاية هوائية', 'محمصة',
-      'صينية فرن', 'مغرفة', 'طحانة قهوة', 'فتاحة علب', 'مريلة'
+      'إفران', 'مراكش', 'كازابلانكا (الدار البيضاء)', 'الرباط', 'طنجة', 'فاس', 'شفشاون', 'أكادير',
+      'الصويرة', 'جامع الفنا', 'مسجد الحسن الثاني', 'شلالات أوزود', 'مرزوكة', 'وليلي', 'عين فيتال', 'صخرة الأسد',
+      'البراق (TGV)', 'جامعة الأخوين', 'الوداد', 'الرجاء', 'مغارة هرقل', 'جبل توبقال'
     ],
     wordsEn: [
-      'Blender', 'Frying Pan', 'Cooking Pot', 'Fork', 'Grater', 'Refrigerator', 'Oven',
-      'Kettle', 'Microwave', 'Spoon', 'Knife', 'Strainer', 'Plate', 'Air Fryer', 'Toaster',
-      'Cutting Board', 'Baking Tray', 'Coffee Grinder', 'Can Opener', 'Apron', 'Whisk'
+      'Ifrane', 'Marrakech', 'Casablanca', 'Rabat', 'Tangier', 'Fes', 'Chefchaouen', 'Agadir',
+      'Essaouira', 'Jemaa el-Fnaa', 'Hassan II Mosque', 'Ouzoud Falls', 'Merzouga Desert', 'Volubilis', 'Ain Vittel', 'Ifrane Lion Stone',
+      'Al Boraq Bullet Train', 'Al Akhawayn University', 'Wydad AC', 'Raja CA', 'Hercules Caves', 'Mount Toubkal'
     ],
     words: [
-      'خلاط', 'مقلاة', 'قدر', 'شوكة', 'مبشرة', 'ثلاجة', 'فرن', 'غلاية',
-      'ميكروويف', 'ملعقة', 'سكين', 'صفاية', 'صحن', 'قطاعة', 'قلاية هوائية', 'محمصة',
-      'صينية فرن', 'مغرفة', 'طحانة قهوة', 'فتاحة علب', 'مريلة'
+      'إفران', 'مراكش', 'كازابلانكا (الدار البيضاء)', 'الرباط', 'طنجة', 'فاس', 'شفشاون', 'أكادير',
+      'الصويرة', 'جامع الفنا', 'مسجد الحسن الثاني', 'شلالات أوزود', 'مرزوكة', 'وليلي', 'عين فيتال', 'صخرة الأسد',
+      'البراق (TGV)', 'جامعة الأخوين', 'الوداد', 'الرجاء', 'مغارة هرقل', 'جبل توبقال'
     ],
   },
 
-  // 4. Supermarket & Grocery (Free)
+  // 4. Uni Life & Tech (Free)
   {
-    id: 'grocery',
-    nameAr: 'البقالة والسوق',
-    nameEn: 'Supermarket',
-    name: 'البقالة والسوق',
+    id: 'uni_tech',
+    nameAr: 'حياة الجامعة والتقنية',
+    nameEn: 'Uni Life & Tech',
+    name: 'حياة الجامعة والتقنية',
     isLocked: false,
-    icon: '🛒',
+    icon: '💻',
     wordsAr: [
-      'حليب', 'خبز', 'شيبس', 'عصير', 'كاشير', 'عربة', 'شوكولاتة', 'زبادي',
-      'جبن', 'بيض', 'معلبات', 'فاتورة', 'كيس', 'آيسكريم', 'بسكويت', 'مخلل',
-      'تفاح', 'صابون', 'مناديل', 'مياه معدنية', 'تونة', 'معجون أسنان'
+      'محاضرة', 'امتحان نهائي', 'السكن الجامعي (الحي)', 'كافيتريا', 'مشروع تخرج', 'غياب', 'منحة', 'لابتوب',
+      'آيفون', 'شات جي بي تي', 'واي فاي', 'شاحن', 'سماعات', 'بايثون', 'ديسكورد', 'إنستغرام',
+      'تيك توك', 'نتفلكس', 'نومه في الكلاس', 'قهوة الصباح', 'طابعة', 'كود برمجي'
     ],
     wordsEn: [
-      'Milk', 'Bread', 'Potato Chips', 'Juice', 'Cashier', 'Shopping Cart', 'Chocolate',
-      'Yogurt', 'Cheese', 'Eggs', 'Canned Food', 'Receipt', 'Plastic Bag', 'Ice Cream',
-      'Biscuits', 'Pickles', 'Apples', 'Soap', 'Tissues', 'Bottled Water', 'Toothpaste'
+      'Morning Lecture', 'Final Exam', 'Dorm Room', 'Campus Cafeteria', 'Group Project', 'Attendance Sheet', 'Scholarship', 'Laptop',
+      'iPhone', 'ChatGPT', 'Campus Wi-Fi', 'Charger', 'AirPods', 'Python Code', 'Discord', 'Instagram',
+      'TikTok', 'Netflix', 'Sleeping in Class', 'Iced Coffee', 'Laser Printer', 'Bug Debugging'
     ],
     words: [
-      'حليب', 'خبز', 'شيبس', 'عصير', 'كاشير', 'عربة', 'شوكولاتة', 'زبادي',
-      'جبن', 'بيض', 'معلبات', 'فاتورة', 'كيس', 'آيسكريم', 'بسكويت', 'مخلل',
-      'تفاح', 'صابون', 'مناديل', 'مياه معدنية', 'تونة', 'معجون أسنان'
+      'محاضرة', 'امتحان نهائي', 'السكن الجامعي (الحي)', 'كافيتريا', 'مشروع تخرج', 'غياب', 'منحة', 'لابتوب',
+      'آيفون', 'شات جي بي تي', 'واي فاي', 'شاحن', 'سماعات', 'بايثون', 'ديسكورد', 'إنستغرام',
+      'تيك توك', 'نتفلكس', 'نومه في الكلاس', 'قهوة الصباح', 'طابعة', 'كود برمجي'
     ],
   },
 
-  // 5. Football & Clubs (VIP)
+  // 5. Everyday Objects (Free)
+  {
+    id: 'daily_objects',
+    nameAr: 'أشياء حولنا والبيت',
+    nameEn: 'Everyday Objects',
+    name: 'أشياء حولنا والبيت',
+    isLocked: false,
+    icon: '🏠',
+    wordsAr: [
+      'خلاط', 'مقلاة', 'ثلاجة', 'ميكروويف', 'غسالة', 'مكنسة', 'تلفزيون', 'ريموت',
+      'مفتاح', 'نظارة', 'ساعة يد', 'عطر', 'مشط', 'مراية', 'وسادة', 'بطانية',
+      'شمسية', 'حقيبة ظهر', 'محفظة', 'قلاية هوائية', 'مكواة', 'مصباح'
+    ],
+    wordsEn: [
+      'Blender', 'Frying Pan', 'Refrigerator', 'Microwave', 'Washing Machine', 'Vacuum Cleaner', 'Television', 'Remote Control',
+      'House Keys', 'Sunglasses', 'Wristwatch', 'Perfume', 'Hairbrush', 'Mirror', 'Pillow', 'Blanket',
+      'Umbrella', 'Backpack', 'Wallet', 'Air Fryer', 'Steam Iron', 'Desk Lamp'
+    ],
+    words: [
+      'خلاط', 'مقلاة', 'ثلاجة', 'ميكروويف', 'غسالة', 'مكنسة', 'تلفزيون', 'ريموت',
+      'مفتاح', 'نظارة', 'ساعة يد', 'عطر', 'مشط', 'مراية', 'وسادة', 'بطانية',
+      'شمسية', 'حقيبة ظهر', 'محفظة', 'قلاية هوائية', 'مكواة', 'مصباح'
+    ],
+  },
+
+  // 6. Football & World Cup (VIP)
   {
     id: 'football',
-    nameAr: 'كورة وأندية 🔒',
-    nameEn: 'Football & Clubs 🔒',
-    name: 'كورة وأندية 🔒',
+    nameAr: 'كورة والمنتخب 🔒',
+    nameEn: 'Football & World Cup 🔒',
+    name: 'كورة والمنتخب 🔒',
     isLocked: true,
     icon: '⚽',
     wordsAr: [
-      'ريال مدريد', 'برشلونة', 'رونالدو', 'ميسي', 'الهلال', 'النصر', 'تسلل', 'ركلة جزاء',
-      'دوري الأبطال', 'كلاسيكو', 'كأس العالم', 'حذاء ذهبي', 'ضربة حرة', 'كرت أحمر',
-      'باريس', 'مانشستر سيتي', 'أرسنال', 'ليفربول', 'الاتحاد', 'الأهلي', 'حارس مرمى', 'فار VAR'
+      'المنتخب المغربي (أسود الأطلس)', 'أشرف حكيمي', 'ياسين بونو', 'إبراهيم دياز', 'حكيم زياش', 'وليد الركراكي', 'ريال مدريد', 'برشلونة',
+      'دوري الأبطال', 'رونالدو', 'ميسي', 'مبابي', 'هالاند', 'فينيسيوس', 'كلاسيكو', 'ركلة جزاء',
+      'تسلل', 'تقنية الفار', 'الكرة الذهبية', 'كأس العالم', 'الهلال', 'النصر'
     ],
     wordsEn: [
-      'Real Madrid', 'Barcelona', 'Cristiano Ronaldo', 'Lionel Messi', 'Al Hilal', 'Al Nassr',
-      'Offside', 'Penalty Kick', 'Champions League', 'World Cup', 'Golden Boot', 'Free Kick',
-      'Red Card', 'PSG', 'Manchester City', 'Arsenal', 'Liverpool', 'Al Ittihad', 'Goalkeeper', 'VAR'
+      'Atlas Lions (Morocco NT)', 'Achraf Hakimi', 'Yassine Bounou', 'Brahim Diaz', 'Hakim Ziyech', 'Walid Regragui', 'Real Madrid', 'FC Barcelona',
+      'Champions League', 'Cristiano Ronaldo', 'Lionel Messi', 'Kylian Mbappé', 'Erling Haaland', 'Vinicius Jr', 'El Clasico', 'Penalty Kick',
+      'Offside', 'VAR Referee', 'Ballon d\'Or', 'World Cup', 'Al Hilal', 'Al Nassr'
     ],
     words: [
-      'ريال مدريد', 'برشلونة', 'رونالدو', 'ميسي', 'الهلال', 'النصر', 'تسلل', 'ركلة جزاء',
-      'دوري الأبطال', 'كلاسيكو', 'كأس العالم', 'حذاء ذهبي', 'ضربة حرة', 'كرت أحمر',
-      'باريس', 'مانشستر سيتي', 'أرسنال', 'ليفربول', 'الاتحاد', 'الأهلي', 'حارس مرمى', 'فار VAR'
+      'المنتخب المغربي (أسود الأطلس)', 'أشرف حكيمي', 'ياسين بونو', 'إبراهيم دياز', 'حكيم زياش', 'وليد الركراكي', 'ريال مدريد', 'برشلونة',
+      'دوري الأبطال', 'رونالدو', 'ميسي', 'مبابي', 'هالاند', 'فينيسيوس', 'كلاسيكو', 'ركلة جزاء',
+      'تسلل', 'تقنية الفار', 'الكرة الذهبية', 'كأس العالم', 'الهلال', 'النصر'
     ],
   },
 
-  // 6. Video Games (VIP)
+  // 7. Video Games (VIP)
   {
     id: 'gaming',
     nameAr: 'ألعاب فيديو 🔒',
@@ -145,152 +170,127 @@ export const CATEGORIES: Category[] = [
     isLocked: true,
     icon: '🎮',
     wordsAr: [
-      'قراند', 'فيفا', 'ماينكرافت', 'روبلوكس', 'فورتنايت', 'كول أوف ديوتي', 'فالورانت',
-      'سوني', 'ديسكورد', 'ستيم', 'ليق أوف ليجندز', 'إيلدن رينق', 'ببجي', 'كراش',
-      'ماريو', 'زيلدا', 'تيكن', 'أوفر ووتش', 'ريد ديد', 'أساسنز كريد', 'غود أوف وور'
+      'فيفا (FC)', 'قراند (GTA)', 'ماينكرافت', 'روبلوكس', 'فورتنايت', 'فالورانت', 'كول أوف ديوتي', 'ليغ أوف ليجيندز',
+      'ذا لاست أوف أس', 'ريد ديد', 'ببجي', 'ماريو كارت', 'كراش', 'زيلدا', 'إلدن رينغ', 'سوني بلايستيشن',
+      'ستيم', 'ديسكورد', 'تيتريس', 'أمونق أس', 'نينتندو سويتش', 'إكس بوكس'
     ],
     wordsEn: [
-      'Grand Theft Auto', 'FIFA FC', 'Minecraft', 'Roblox', 'Fortnite', 'Call of Duty',
-      'Valorant', 'PlayStation', 'Steam', 'Discord', 'League of Legends', 'Elden Ring',
-      'PUBG', 'Crash Bandicoot', 'Super Mario', 'Zelda', 'Tekken', 'Overwatch', 'Red Dead Redemption', 'God of War'
+      'EA FC (FIFA)', 'GTA V', 'Minecraft', 'Roblox', 'Fortnite', 'Valorant', 'Call of Duty', 'League of Legends',
+      'The Last of Us', 'Red Dead Redemption', 'PUBG', 'Mario Kart', 'Crash Bandicoot', 'Zelda', 'Elden Ring', 'PlayStation 5',
+      'Steam', 'Discord', 'Tetris', 'Among Us', 'Nintendo Switch', 'Xbox Series X'
     ],
     words: [
-      'قراند', 'فيفا', 'ماينكرافت', 'روبلوكس', 'فورتنايت', 'كول أوف ديوتي', 'فالورانت',
-      'سوني', 'ديسكورد', 'ستيم', 'ليق أوف ليجندز', 'إيلدن رينق', 'ببجي', 'كراش',
-      'ماريو', 'زيلدا', 'تيكن', 'أوفر ووتش', 'ريد ديد', 'أساسنز كريد', 'غود أوف وور'
+      'فيفا (FC)', 'قراند (GTA)', 'ماينكرافت', 'روبلوكس', 'فورتنايت', 'فالورانت', 'كول أوف ديوتي', 'ليغ أوف ليجيندز',
+      'ذا لاست أوف أس', 'ريد ديد', 'ببجي', 'ماريو كارت', 'كراش', 'زيلدا', 'إلدن رينغ', 'سوني بلايستيشن',
+      'ستيم', 'ديسكورد', 'تيتريس', 'أمونق أس', 'نينتندو سويتش', 'إكس بوكس'
     ],
   },
 
-  // 7. Anime & Manga (VIP)
+  // 8. Anime & Manga (VIP)
   {
     id: 'anime',
     nameAr: 'أنمي ومانجا 🔒',
     nameEn: 'Anime & Manga 🔒',
     name: 'أنمي ومانجا 🔒',
     isLocked: true,
-    icon: '⚡',
+    icon: '⚔️',
     wordsAr: [
-      'ون بيس', 'ناروتو', 'هجوم العمالقة', 'قاتل الشياطين', 'لوفي', 'غوكو', 'كونان',
-      'جوجوتسو كايسن', 'ديث نوت', 'بليتش', 'هنتر هنتر', 'سيلور مون', 'ساسكي', 'زورو',
-      'كايدو', 'إيتاشي', 'إرين', 'ليفاي', 'كاكاشي', 'مادارا', 'غوجو ساتورو'
+      'ون بيس', 'ناروتو', 'هجوم العمالقة', 'قاتل الشياطين', 'دراغون بول', 'لوفي', 'زورو', 'غوكو',
+      'كونان', 'جوجوتسو كايسن', 'ديث نوت', 'إيتاتشي', 'فيري تيل', 'بليتش', 'كينغدوم', 'سوكونا',
+      'ليفاي', 'سولو ليفلينغ', 'سبيستون', 'هايكيو', 'هنتر إكس هنتر', 'طوكيو غول'
     ],
     wordsEn: [
-      'One Piece', 'Naruto', 'Attack on Titan', 'Demon Slayer', 'Monkey D. Luffy', 'Goku',
-      'Detective Conan', 'Jujutsu Kaisen', 'Death Note', 'Bleach', 'Hunter x Hunter',
-      'Roronoa Zoro', 'Sasuke Uchiha', 'Itachi', 'Eren Yeager', 'Levi Ackerman', 'Kakashi', 'Madara', 'Satoru Gojo', 'Dragon Ball'
+      'One Piece', 'Naruto', 'Attack on Titan', 'Demon Slayer', 'Dragon Ball', 'Luffy', 'Zoro', 'Goku',
+      'Detective Conan', 'Jujutsu Kaisen', 'Death Note', 'Itachi', 'Fairy Tail', 'Bleach', 'Kingdom', 'Sukuna',
+      'Levi Ackerman', 'Solo Leveling', 'Spacetoon', 'Haikyuu', 'Hunter x Hunter', 'Tokyo Ghoul'
     ],
     words: [
-      'ون بيس', 'ناروتو', 'هجوم العمالقة', 'قاتل الشياطين', 'لوفي', 'غوكو', 'كونان',
-      'جوجوتسو كايسن', 'ديث نوت', 'بليتش', 'هنتر هنتر', 'سيلور مون', 'ساسكي', 'زورو',
-      'كايدو', 'إيتاشي', 'إرين', 'ليفاي', 'كاكاشي', 'مادارا', 'غوجو ساتورو'
+      'ون بيس', 'ناروتو', 'هجوم العمالقة', 'قاتل الشياطين', 'دراغون بول', 'لوفي', 'زورو', 'غوكو',
+      'كونان', 'جوجوتسو كايسن', 'ديث نوت', 'إيتاتشي', 'فيري تيل', 'بليتش', 'كينغدوم', 'سوكونا',
+      'ليفاي', 'سولو ليفلينغ', 'سبيستون', 'هايكيو', 'هنتر إكس هنتر', 'طوكيو غول'
     ],
   },
 
-  // 8. Movies & Series (VIP)
+  // 9. Movies & Cinema (VIP)
   {
     id: 'movies',
     nameAr: 'مسلسلات وأفلام 🔒',
-    nameEn: 'Movies & Series 🔒',
+    nameEn: 'Movies & Cinema 🔒',
     name: 'مسلسلات وأفلام 🔒',
     isLocked: true,
-    icon: '🎬',
+    icon: '🍿',
     wordsAr: [
-      'بريكنق باد', 'صراع العروش', 'هاري بوتر', 'سبايدرمان', 'باتمان', 'الجوكر', 'نتفلكس',
-      'أوسكار', 'إنسبشن', 'إنترستيلر', 'سيد الخواتم', 'أفاتار', 'طاش ما طاش', 'شباب البومب',
-      'باب الحارة', 'تايتانيك', 'بيكي بلايندرز', 'سترينجر ثينقز', 'مارفل', 'أوبنهايمر'
+      'بريكنق باد', 'صراع العروش', 'بيكي بلايندرز', 'هاري بوتر', 'سبايدرمان', 'باتمان', 'الجوكر', 'سيد الخواتم',
+      'إنترستيلار', 'إنسبشن', 'تايتانيك', 'لا كاسا دي بابيل', 'فريندز', 'سترينجر ثينقز', 'مستر بين', 'سكواد جيم',
+      'أوسكار', 'مارفل', 'هوليوود', 'نتفلكس', 'أوبنهايمر', 'جلاديتور'
     ],
     wordsEn: [
-      'Breaking Bad', 'Game of Thrones', 'Harry Potter', 'Spider-Man', 'Batman', 'Joker',
-      'Netflix', 'Oscar Trophy', 'Inception', 'Interstellar', 'Lord of the Rings', 'Avatar',
-      'Titanic', 'Peaky Blinders', 'Stranger Things', 'Marvel Studios', 'Star Wars', 'The Matrix', 'Oppenheimer', 'Gladiator'
+      'Breaking Bad', 'Game of Thrones', 'Peaky Blinders', 'Harry Potter', 'Spider-Man', 'Batman', 'The Joker', 'Lord of the Rings',
+      'Interstellar', 'Inception', 'Titanic', 'Money Heist', 'Friends', 'Stranger Things', 'Mr. Bean', 'Squid Game',
+      'Oscars', 'Marvel Studios', 'Hollywood', 'Netflix', 'Oppenheimer', 'Gladiator'
     ],
     words: [
-      'بريكنق باد', 'صراع العروش', 'هاري بوتر', 'سبايدرمان', 'باتمان', 'الجوكر', 'نتفلكس',
-      'أوسكار', 'إنسبشن', 'إنترستيلر', 'سيد الخواتم', 'أفاتار', 'طاش ما طاش', 'شباب البومب',
-      'باب الحارة', 'تايتانيك', 'بيكي بلايندرز', 'سترينجر ثينقز', 'مارفل', 'أوبنهايمر'
+      'بريكنق باد', 'صراع العروش', 'بيكي بلايندرز', 'هاري بوتر', 'سبايدرمان', 'باتمان', 'الجوكر', 'سيد الخواتم',
+      'إنترستيلار', 'إنسبشن', 'تايتانيك', 'لا كاسا دي بابيل', 'فريندز', 'سترينجر ثينقز', 'مستر بين', 'سكواد جيم',
+      'أوسكار', 'مارفل', 'هوليوود', 'نتفلكس', 'أوبنهايمر', 'جلاديتور'
     ],
   },
 
-  // 9. Countries & Tourism (VIP)
+  // 10. Travel & World (VIP)
   {
-    id: 'countries',
-    nameAr: 'دول ومدن سياحية 🔒',
-    nameEn: 'Countries & Cities 🔒',
-    name: 'دول ومدن سياحية 🔒',
+    id: 'travel',
+    nameAr: 'دول وسياحة 🔒',
+    nameEn: 'Travel & World 🔒',
+    name: 'دول وسياحة 🔒',
     isLocked: true,
     icon: '✈️',
     wordsAr: [
-      'الكويت', 'الرياض', 'دبي', 'إفران', 'كازابلانكا', 'باريس', 'طوكيو', 'لندن',
-      'إسطنبول', 'القاهرة', 'المالديف', 'برشلونة', 'نيويورك', 'روما', 'بالي',
-      'الدوحة', 'جدة', 'مراكش', 'سيول', 'لوس أنجلوس', 'صلالة'
+      'اليابان', 'فرنسا', 'إسبانيا', 'تركيا', 'إيطاليا', 'السعودية', 'الإمارات', 'إنجلترا',
+      'أمريكا', 'مصر', 'سويسرا', 'تايلاند', 'المالديف', 'باريس', 'لندن', 'طوكيو',
+      'إسطنبول', 'دبي', 'نيويورك', 'روما', 'برشلونة', 'أمستردام'
     ],
     wordsEn: [
-      'Kuwait', 'Riyadh', 'Dubai', 'Ifrane', 'Casablanca', 'Paris', 'Tokyo', 'London',
-      'Istanbul', 'Cairo', 'Maldives', 'Barcelona', 'New York', 'Rome', 'Bali',
-      'Doha', 'Jeddah', 'Marrakech', 'Seoul', 'Los Angeles', 'Salalah'
+      'Japan', 'France', 'Spain', 'Turkey', 'Italy', 'Saudi Arabia', 'UAE', 'England',
+      'USA', 'Egypt', 'Switzerland', 'Thailand', 'Maldives', 'Paris', 'London', 'Tokyo',
+      'Istanbul', 'Dubai', 'New York', 'Rome', 'Barcelona', 'Amsterdam'
     ],
     words: [
-      'الكويت', 'الرياض', 'دبي', 'إفران', 'كازابلانكا', 'باريس', 'طوكيو', 'لندن',
-      'إسطنبول', 'القاهرة', 'المالديف', 'برشلونة', 'نيويورك', 'روما', 'بالي',
-      'الدوحة', 'جدة', 'مراكش', 'سيول', 'لوس أنجلوس', 'صلالة'
+      'اليابان', 'فرنسا', 'إسبانيا', 'تركيا', 'إيطاليا', 'السعودية', 'الإمارات', 'إنجلترا',
+      'أمريكا', 'مصر', 'سويسرا', 'تايلاند', 'المالديف', 'باريس', 'لندن', 'طوكيو',
+      'إسطنبول', 'دبي', 'نيويورك', 'روما', 'برشلونة', 'أمستردام'
     ],
   },
 
-  // 10. Cars & Brands (VIP)
+  // 11. Cars & Supercars (VIP)
   {
     id: 'cars',
-    nameAr: 'سيارات وماركات 🔒',
-    nameEn: 'Cars & Brands 🔒',
-    name: 'سيارات وماركات 🔒',
+    nameAr: 'سيارات وسرعة 🔒',
+    nameEn: 'Cars & Supercars 🔒',
+    name: 'سيارات وسرعة 🔒',
     isLocked: true,
     icon: '🏎️',
     wordsAr: [
-      'مرسيدس', 'بي إم دبليو', 'بورش', 'فراري', 'تويوتا', 'لاندكروزر', 'تسلا', 'لكزس',
-      'نيسان باترول', 'رولز رويس', 'لامبورغيني', 'رينج روفر', 'فورد موستنج', 'بنتلي',
-      'أودي', 'مازيراتي', 'شيفروليه', 'كامري', 'كورفيت', 'جيب شيروكي'
+      'مرسيدس', 'بي إم دبليو', 'بورش', 'فيراري', 'لامبورغيني', 'لاندكروزر', 'رنج روفر', 'نيسان باترول',
+      'أودي', 'تويوتا', 'تسلا', 'ماكلارين', 'موستانج', 'رولز رويس', 'بوقاتي', 'بيك أب (ديباناج)',
+      'كاميرا ساهر', 'رادار', 'رالي داكار', 'تفحيط', 'فورد رابتر', 'جيب رانجلر'
     ],
     wordsEn: [
-      'Mercedes-Benz', 'BMW', 'Porsche', 'Ferrari', 'Toyota', 'Land Cruiser', 'Tesla', 'Lexus',
-      'Nissan Patrol', 'Rolls-Royce', 'Lamborghini', 'Range Rover', 'Ford Mustang', 'Bentley',
-      'Audi', 'Maserati', 'Chevrolet', 'Camry', 'Corvette', 'Jeep Cherokee'
+      'Mercedes-Benz', 'BMW', 'Porsche', 'Ferrari', 'Lamborghini', 'Land Cruiser', 'Range Rover', 'Nissan Patrol',
+      'Audi', 'Toyota', 'Tesla', 'McLaren', 'Mustang', 'Rolls-Royce', 'Bugatti', 'Tow Truck',
+      'Speed Camera', 'Radar Detector', 'Dakar Rally', 'Drifting', 'Ford Raptor', 'Jeep Wrangler'
     ],
     words: [
-      'مرسيدس', 'بي إم دبليو', 'بورش', 'فراري', 'تويوتا', 'لاندكروزر', 'تسلا', 'لكزس',
-      'نيسان باترول', 'رولز رويس', 'لامبورغيني', 'رينج روفر', 'فورد موستنج', 'بنتلي',
-      'أودي', 'مازيراتي', 'شيفروليه', 'كامري', 'كورفيت', 'جيب شيروكي'
+      'مرسيدس', 'بي إم دبليو', 'بورش', 'فيراري', 'لامبورغيني', 'لاندكروزر', 'رنج روفر', 'نيسان باترول',
+      'أودي', 'تويوتا', 'تسلا', 'ماكلارين', 'موستانج', 'رولز رويس', 'بوقاتي', 'بيك أب (ديباناج)',
+      'كاميرا ساهر', 'رادار', 'رالي داكار', 'تفحيط', 'فورد رابتر', 'جيب رانجلر'
     ],
   },
 
-  // 11. Tech & University Life (VIP)
-  {
-    id: 'tech',
-    nameAr: 'تقنية وجامعة 🔒',
-    nameEn: 'Tech & Uni Life 🔒',
-    name: 'تقنية وجامعة 🔒',
-    isLocked: true,
-    icon: '💻',
-    wordsAr: [
-      'آيفون', 'شات جي بي تي', 'بايثون', 'لابتوب', 'اختبار نهائي', 'محاضرة', 'كود', 'واي فاي',
-      'بطارية', 'بروجكتر', 'ذكاء اصطناعي', 'إيميل', 'يوتيوب', 'بلوتوث', 'ماوس', 'كيبورد',
-      'شاحن', 'خوارزمية', 'بحث تخرج', 'معدل تراكمي', 'حضور وغياب'
-    ],
-    wordsEn: [
-      'iPhone', 'ChatGPT', 'Python', 'Laptop', 'Final Exam', 'Lecture', 'Source Code', 'Wi-Fi',
-      'Battery', 'Projector', 'Artificial Intelligence', 'Email', 'YouTube', 'Bluetooth', 'Mouse', 'Keyboard',
-      'Charger', 'Algorithm', 'Graduation Project', 'GPA', 'Attendance'
-    ],
-    words: [
-      'آيفون', 'شات جي بي تي', 'بايثون', 'لابتوب', 'اختبار نهائي', 'محاضرة', 'كود', 'واي فاي',
-      'بطارية', 'بروجكتر', 'ذكاء اصطناعي', 'إيميل', 'يوتيوب', 'بلوتوث', 'ماوس', 'كيبورد',
-      'شاحن', 'خوارزمية', 'بحث تخرج', 'معدل تراكمي', 'حضور وغياب'
-    ],
-  },
-
-  // 12. Custom Category ✍️ (VIP)
+  // 12. Custom Topic (VIP)
   {
     id: 'custom',
     nameAr: 'فئة مخصصة ✍️ 🔒',
-    nameEn: 'Custom Category ✍️ 🔒',
+    nameEn: 'Custom Topic ✍️ 🔒',
     name: 'فئة مخصصة ✍️ 🔒',
     isLocked: true,
     icon: '✍️',
@@ -306,7 +306,7 @@ export const CATEGORIES: Category[] = [
   },
 ];
 
-export const DEFAULT_CATEGORY_ID = 'food';
+export const DEFAULT_CATEGORY_ID = 'moroccan_food';
 
 export function getCategoriesWithLockStatus(
   isPremiumRoom: boolean,
@@ -320,8 +320,9 @@ export function getCategoriesWithLockStatus(
     let localizedName = lang === 'en' ? cat.nameEn : cat.nameAr;
     let localizedWords = lang === 'en' ? [...cat.wordsEn] : [...cat.wordsAr];
 
-    if (isCustom && customCategory && customCategory.name) {
-      localizedName = `${customCategory.name} ✍️`;
+    if (isCustom && customCategory && (customCategory.name || customCategory.title)) {
+      const customTitle = customCategory.name || customCategory.title;
+      localizedName = `${customTitle} ✍️`;
       if (customCategory.words && customCategory.words.length >= 8) {
         localizedWords = customCategory.words;
       }

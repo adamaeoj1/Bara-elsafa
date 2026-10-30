@@ -4,7 +4,6 @@ import { WelcomeScreen } from './components/WelcomeScreen';
 import { CharacterStage } from './components/CharacterStage';
 import { PaywallModal } from './components/PaywallModal';
 import { QrCodeModal } from './components/QrCodeModal';
-import { ConnectionStatusBadge } from './components/ConnectionStatusBadge';
 import { LobbyPhase } from './components/phases/LobbyPhase';
 import { RoleRevealPhase } from './components/phases/RoleRevealPhase';
 import { QuestionsPhase } from './components/phases/QuestionsPhase';
@@ -14,7 +13,7 @@ import { GameOverPhase } from './components/phases/GameOverPhase';
 import { CATEGORIES } from './data/categories';
 import { soundFx } from './utils/soundFx';
 import { useTranslation } from './i18n/LanguageContext';
-import { LogOut, Sparkles, Globe, Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 
 export function App() {
   const { t, language, toggleLanguage } = useTranslation();
@@ -76,10 +75,10 @@ export function App() {
     ? (roomState.customCategory?.title || roomState.customCategory?.name || activeCategory.nameEn)
     : (roomState.customCategory?.title || roomState.customCategory?.name || activeCategory.nameAr);
 
-  // 1. If not currently in an active room, render the Welcome Onboarding Screen
+  // 1. If not currently in an active room, render Welcome / Onboarding Screen
   if (!isInRoom) {
     return (
-      <>
+      <div className={`min-h-[100dvh] bg-[#F7F4EB] text-black ${language === 'en' ? 'font-jakarta' : 'font-cairo'} select-none overflow-x-hidden`}>
         {kickedNotice && (
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white font-black text-xs px-4 py-2 rounded-xl border-2 border-black shadow-brutal animate-bounce">
             ⚠️ {kickedNotice}
@@ -100,93 +99,80 @@ export function App() {
           }}
           isConnecting={isConnecting}
         />
-      </>
+      </div>
     );
   }
 
   // 2. Active Game Screen
   return (
-    <div className={`min-h-screen bg-[#F7F4EB] flex flex-col justify-between text-black ${language === 'en' ? 'font-jakarta' : 'font-cairo'} select-none`}>
-      {/* Main Container */}
-      <main className="flex-1 flex flex-col justify-between max-w-md w-full mx-auto px-4 py-3">
-        {/* Header Bar */}
-        <header className="flex items-center justify-between mb-3 border-b-2 border-black/10 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-brand-yellow border-2 border-black shadow-brutal-sm flex items-center justify-center font-black text-sm">
-              🎭
-            </div>
-            <div>
-              <h1 className="text-base font-black tracking-tight leading-none text-black">
-                {t('appTitle')} <span className="text-brand-purple">| {t('appSubtitle')}</span>
-              </h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] font-bold text-gray-500">
-                  {t('categoryLabel')} {categoryDisplayName} {activeCategory.icon}
-                </span>
-                <span className="text-gray-400 text-[10px]">•</span>
-                <ConnectionStatusBadge isOnline={isOnline} />
-              </div>
-            </div>
+    <div className={`min-h-[100dvh] bg-[#F7F4EB] flex flex-col justify-between text-black ${language === 'en' ? 'font-jakarta' : 'font-cairo'} select-none overflow-x-hidden`}>
+      {/* Strict Production Top Header */}
+      <header className="h-14 px-3 flex items-center justify-between border-b-2 border-black bg-[#F7F4EB] shrink-0 sticky top-0 z-40">
+        {/* Brand Side (Start) */}
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-xl bg-brand-yellow border-2 border-black shadow-brutal-sm flex items-center justify-center font-black text-base shrink-0">
+            🎭
           </div>
+          <div className="flex items-center gap-1.5 flex-nowrap">
+            <span className="text-base font-black text-black tracking-tight leading-none">
+              {t('appTitle')}
+            </span>
+            <span className="bg-brand-purple/15 text-brand-purple text-[10px] font-black px-1.5 py-0.5 rounded-md border border-black/20 whitespace-nowrap">
+              {t('appSubtitle')}
+            </span>
+          </div>
+        </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Language Switcher */}
+        {/* Controls Side (End) - Strictly 3 compact, uniform buttons (h-9) */}
+        <div className="flex items-center gap-1.5">
+          {/* 1. VIP / Pro Button */}
+          {isVip ? (
             <button
-              onClick={toggleLanguage}
-              className="bg-white hover:bg-gray-100 text-black border-2 border-black px-2 py-0.5 rounded-lg text-xs font-black shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-1"
-              title={language === 'ar' ? 'Switch to English' : 'التحويل للعربية'}
+              onClick={() => setIsPaywallOpen(true)}
+              className="h-9 px-2.5 rounded-lg border-2 border-black bg-brand-yellow shadow-brutal-sm flex items-center gap-1 font-black text-xs text-black active:translate-x-[1px] active:translate-y-[1px] transition-all"
+              title={t('vipActive')}
             >
-              <Globe className="w-3.5 h-3.5" />
-              <span>{language === 'ar' ? 'EN' : 'عربي'}</span>
+              <span>{t('vipActive')}</span>
             </button>
-
-            {/* Sound Mute/Unmute Toggle */}
+          ) : (
             <button
-              onClick={handleToggleSound}
-              className="bg-white hover:bg-gray-100 text-black border-2 border-black p-1 rounded-lg text-xs font-black shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center"
-              title={isMuted ? t('soundUnmuted') : t('soundMuted')}
+              onClick={() => setIsPaywallOpen(true)}
+              className="h-9 px-2.5 rounded-lg border-2 border-black bg-brand-yellow hover:bg-[#ffe175] shadow-brutal-sm flex items-center gap-1 font-black text-xs text-black active:translate-x-[1px] active:translate-y-[1px] transition-all"
+              title={t('proUpgradeBtn')}
             >
-              {isMuted ? (
-                <VolumeX className="w-3.5 h-3.5 text-gray-400" />
-              ) : (
-                <Volume2 className="w-3.5 h-3.5 text-black" />
-              )}
+              <span>{t('proUpgradeBtn')}</span>
             </button>
+          )}
 
-            {/* VIP Status or Unlock Button */}
-            {isVip ? (
-              <span className="bg-brand-yellow text-black text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-black shadow-brutal-sm flex items-center gap-1 animate-pulse">
-                <Sparkles className="w-3 h-3 fill-yellow-500" />
-                <span>{t('vipActive')}</span>
-              </span>
+          {/* 2. Audio Mute/Unmute Button */}
+          <button
+            onClick={handleToggleSound}
+            className="w-9 h-9 rounded-lg border-2 border-black bg-white hover:bg-gray-100 shadow-brutal-sm flex items-center justify-center text-black active:translate-x-[1px] active:translate-y-[1px] transition-all shrink-0"
+            title={isMuted ? t('soundUnmuted') : t('soundMuted')}
+            aria-label={t('soundToggle')}
+          >
+            {isMuted ? (
+              <VolumeX className="w-4 h-4 text-gray-400" />
             ) : (
-              <button
-                onClick={() => setIsPaywallOpen(true)}
-                className="bg-brand-yellow hover:bg-[#ffe175] text-black text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-black shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-1"
-                title={t('unlockVipBtn')}
-              >
-                <span>{t('unlockVipBtn')}</span>
-              </button>
+              <Volume2 className="w-4 h-4 text-black" />
             )}
+          </button>
 
-            {/* Room Code Badge */}
-            <div className="bg-white px-2 py-0.5 rounded-full border-2 border-black text-[11px] font-black shadow-brutal-sm">
-              <span className="font-mono text-brand-purple">{roomState.roomCode}</span>
-            </div>
+          {/* 3. Language Toggle Button */}
+          <button
+            onClick={toggleLanguage}
+            className="px-3 h-9 rounded-lg border-2 border-black bg-white hover:bg-gray-100 shadow-brutal-sm flex items-center justify-center font-black text-xs text-black active:translate-x-[1px] active:translate-y-[1px] transition-all shrink-0"
+            title={language === 'ar' ? 'Switch to English' : 'التحويل للعربية'}
+          >
+            <span>{t('langToggle')}</span>
+          </button>
+        </div>
+      </header>
 
-            {/* Leave Room Button */}
-            <button
-              onClick={leaveRoom}
-              className="p-1.5 text-gray-500 hover:text-red-600 rounded-lg transition-colors"
-              title={t('leaveRoom')}
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
-
+      {/* Main Viewport Container */}
+      <main className="flex-1 flex flex-col justify-between max-w-md w-full mx-auto px-3 py-2 overflow-x-hidden">
         {/* Phase Viewport */}
-        <div className="flex-1 flex flex-col justify-center my-auto">
+        <div className="flex-1 flex flex-col justify-center my-auto w-full">
           {roomState.phase === 'LOBBY' && (
             <LobbyPhase
               roomCode={roomState.roomCode}
@@ -270,7 +256,7 @@ export function App() {
         </div>
       </main>
 
-      {/* Persistent Character Stage (Bottom Dock - Real Connected Players Only) */}
+      {/* Persistent Character Stage (Bottom Dock) */}
       <CharacterStage
         players={roomState.players}
         activePlayerId={activePlayerId}
