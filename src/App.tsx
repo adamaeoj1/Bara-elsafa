@@ -3,6 +3,7 @@ import { useGameEngine } from './hooks/useGameEngine';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { CharacterStage } from './components/CharacterStage';
 import { PaywallModal } from './components/PaywallModal';
+import { ConnectionStatusBadge } from './components/ConnectionStatusBadge';
 import { LobbyPhase } from './components/phases/LobbyPhase';
 import { RoleRevealPhase } from './components/phases/RoleRevealPhase';
 import { QuestionsPhase } from './components/phases/QuestionsPhase';
@@ -17,6 +18,7 @@ export function App() {
     profile,
     isInRoom,
     isConnecting,
+    isOnline,
     roomState,
     activePlayerId,
     activePlayer,
@@ -67,6 +69,7 @@ export function App() {
         <WelcomeScreen
           initialRoomCode={initialRoomFromUrl}
           initialProfile={profile}
+          isOnline={isOnline}
           onUpdateProfile={updateProfile}
           onCreateRoom={createRoom}
           onJoinRoom={joinRoom}
@@ -91,13 +94,17 @@ export function App() {
               <h1 className="text-base font-black tracking-tight leading-none text-black">
                 شوتايم <span className="text-brand-purple">| برا السالفة</span>
               </h1>
-              <span className="text-[10px] font-bold text-gray-500">
-                الفئة: {activeCategory.name} {activeCategory.icon}
-              </span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[10px] font-bold text-gray-500">
+                  الفئة: {activeCategory.name} {activeCategory.icon}
+                </span>
+                <span className="text-gray-400 text-[10px]">•</span>
+                <ConnectionStatusBadge isOnline={isOnline} />
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* VIP Room Badge or Upgrade trigger */}
             {roomState.isPremiumRoom ? (
               <span className="bg-brand-purple text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-black shadow-brutal-sm flex items-center gap-1">

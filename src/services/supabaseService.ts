@@ -1,27 +1,54 @@
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { Player, RoomState, GamePhase, PlayerColor } from '../types/game';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const rawUrl = import.meta.env.VITE_SUPABASE_URL;
+const rawKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = (): boolean => {
-  return Boolean(
-    supabaseUrl &&
-    supabaseAnonKey &&
-    supabaseUrl.startsWith('http') &&
-    supabaseAnonKey.length > 10
-  );
+  if (!rawUrl || !rawKey) return false;
+  if (typeof rawUrl !== 'string' || typeof rawKey !== 'string') return false;
+
+  const cleanUrl = rawUrl.trim();
+  const cleanKey = rawKey.trim();
+
+  // Validate that strings are not placeholders
+  if (
+    cleanUrl.includes('your-project') ||
+    cleanUrl.includes('placeholder') ||
+    cleanUrl.includes('example.com') ||
+    cleanKey.includes('your-anon') ||
+    cleanKey.includes('placeholder') ||
+    !cleanUrl.startsWith('http') ||
+    cleanKey.length < 20
+  ) {
+    return false;
+  }
+
+  return true;
 };
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured()
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(rawUrl.trim(), rawKey.trim())
   : null;
+
+// Test actual live connection to Supabase
+export async function testSupabaseConnection(): Promise<boolean> {
+  if (!supabase || !isSupabaseConfigured()) return false;
+
+  try {
+    const { error } = await supabase.from('rooms').select('code').limit(1);
+    return !error;
+  } catch (err) {
+    console.warn('[Supabase] Connection test failed, will use local sync mode:', err);
+    return false;
+  }
+}
 
 // Map DB Room row to RoomState
 export function mapDbRoomToRoomState(dbRoom: any, players: Player[]): RoomState {
   return {
     roomCode: dbRoom.code,
-    phase: dbRoom.phase as GamePhase,
+    phase: (dbRoom.phase as GamePhase) || 'LOBBY',
     players,
     selectedCategoryId: dbRoom.selected_category_id || 'food',
     secretWord: dbRoom.secret_word || '',
@@ -29,7 +56,7 @@ export function mapDbRoomToRoomState(dbRoom: any, players: Player[]): RoomState 
     questionPairs: Array.isArray(dbRoom.question_pairs) ? dbRoom.question_pairs : [],
     questionTimeRemaining: 25,
     turnStartedAt: dbRoom.turn_started_at || null,
-    votes: {}, // Built dynamically from players' voted_target_id
+    votes: {},
     votingRevealed: Boolean(dbRoom.voting_revealed),
     caughtImpostorId: dbRoom.caught_impostor_id || null,
     lastChanceOptions: Array.isArray(dbRoom.last_chance_options) ? dbRoom.last_chance_options : [],
@@ -61,6 +88,10 @@ export async function createRoomInDb(roomCode: string, hostPlayer: Player, categ
   if (!supabase) return false;
 
   try {
+    // Delete any stale room or players with this code first to prevent constraint collision
+    await supabase.from('players').delete().eq('room_code', roomCode);
+    await supabase.from('rooms').delete().eq('code', roomCode);
+
     const { error: roomError } = await supabase.from('rooms').insert({
       code: roomCode,
       phase: 'LOBBY',
@@ -80,7 +111,7 @@ export async function createRoomInDb(roomCode: string, hostPlayer: Player, categ
     });
 
     if (roomError) {
-      console.error('[Supabase] Error creating room:', roomError);
+      console.warn('[Supabase] Error creating room in DB:', roomError);
       return false;
     }
 
@@ -95,13 +126,13 @@ export async function createRoomInDb(roomCode: string, hostPlayer: Player, categ
     });
 
     if (playerError) {
-      console.error('[Supabase] Error inserting host player:', playerError);
+      console.warn('[Supabase] Error inserting host player in DB:', playerError);
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('[Supabase] Exception in createRoomInDb:', err);
+    console.warn('[Supabase] Exception in createRoomInDb:', err);
     return false;
   }
 }
@@ -130,38 +161,41 @@ export async function fetchRoomDataFromDb(roomCode: string): Promise<{ room: any
     const players = (playersData || []).map(mapDbPlayerToPlayer);
     return { room: roomData, players };
   } catch (err) {
-    console.error('[Supabase] Exception in fetchRoomDataFromDb:', err);
+    console.warn('[Supabase] Exception in fetchRoomDataFromDb:', err);
     return null;
   }
 }
 
 // 3. Join Room
-export async function joinRoomInDb(roomCode: string, player: Player): Promise<{ success: boolean; error?: string }> {
+export async function joinRoomInDb(roomCode: string, player: Player): Promise<{ success: boolean; error?: string; room?: any; players?: Player[] }> {
   if (!supabase) return { success: false, error: 'Database not connected' };
 
   try {
-    // Check if room exists and is in LOBBY
     const { data: roomData, error: roomError } = await supabase
       .from('rooms')
-      .select('phase')
+      .select('*')
       .eq('code', roomCode)
       .maybeSingle();
 
-    if (roomError || !roomData) {
-      return { success: false, error: 'الغرفة غير موجودة! تأكد من الرمز المدخل.' };
+    if (roomError) {
+      return { success: false, error: roomError.message };
+    }
+
+    if (!roomData) {
+      return { success: false, error: 'ROOM_NOT_FOUND' };
     }
 
     if (roomData.phase !== 'LOBBY') {
       return { success: false, error: 'اللعبة قد بدأت بالفعل في هذه الغرفة! انتظر حتى تنتهي.' };
     }
 
-    // Insert or update player
+    // Insert or update player in DB
     const { error: insertError } = await supabase.from('players').upsert({
       id: player.id,
       room_code: roomCode,
       name: player.name,
       color: player.color,
-      is_host: player.isHost,
+      is_host: false,
       is_impostor: false,
       has_voted: false,
       voted_target_id: null,
@@ -169,12 +203,19 @@ export async function joinRoomInDb(roomCode: string, player: Player): Promise<{ 
     });
 
     if (insertError) {
-      return { success: false, error: 'تعذر الانضمام للغرفة: ' + insertError.message };
+      return { success: false, error: insertError.message };
     }
 
-    return { success: true };
+    const { data: playersData } = await supabase
+      .from('players')
+      .select('*')
+      .eq('room_code', roomCode)
+      .order('created_at', { ascending: true });
+
+    const players = (playersData || []).map(mapDbPlayerToPlayer);
+    return { success: true, room: roomData, players };
   } catch (err: any) {
-    return { success: false, error: err.message || 'حدث خطأ أثناء الانضمام' };
+    return { success: false, error: err?.message || 'حدث خطأ أثناء الانضمام' };
   }
 }
 
@@ -183,7 +224,6 @@ export async function removePlayerFromDb(roomCode: string, playerId: string): Pr
   if (!supabase) return false;
 
   try {
-    // Check if the removed player was host
     const { data: removedPlayer } = await supabase
       .from('players')
       .select('is_host')
@@ -192,10 +232,8 @@ export async function removePlayerFromDb(roomCode: string, playerId: string): Pr
 
     const wasHost = removedPlayer?.is_host;
 
-    // Delete player
     await supabase.from('players').delete().eq('id', playerId);
 
-    // If host left, promote oldest remaining player to host
     if (wasHost) {
       const { data: remainingPlayers } = await supabase
         .from('players')
@@ -210,14 +248,13 @@ export async function removePlayerFromDb(roomCode: string, playerId: string): Pr
           .update({ is_host: true })
           .eq('id', remainingPlayers[0].id);
       } else {
-        // No players left, optionally delete room
         await supabase.from('rooms').delete().eq('code', roomCode);
       }
     }
 
     return true;
   } catch (err) {
-    console.error('[Supabase] Exception in removePlayerFromDb:', err);
+    console.warn('[Supabase] Exception in removePlayerFromDb:', err);
     return false;
   }
 }
@@ -234,12 +271,12 @@ export async function updateRoomInDb(roomCode: string, fields: Record<string, an
 
     return !error;
   } catch (err) {
-    console.error('[Supabase] Exception in updateRoomInDb:', err);
+    console.warn('[Supabase] Exception in updateRoomInDb:', err);
     return false;
   }
 }
 
-// 6. Update Multiple Players (e.g. role distribution or votes reset)
+// 6. Update Multiple Players
 export async function updatePlayersBatchInDb(players: Player[]): Promise<boolean> {
   if (!supabase || players.length === 0) return false;
 
@@ -258,7 +295,7 @@ export async function updatePlayersBatchInDb(players: Player[]): Promise<boolean
     }
     return true;
   } catch (err) {
-    console.error('[Supabase] Exception in updatePlayersBatchInDb:', err);
+    console.warn('[Supabase] Exception in updatePlayersBatchInDb:', err);
     return false;
   }
 }
@@ -267,14 +304,12 @@ export async function updatePlayersBatchInDb(players: Player[]): Promise<boolean
 export async function verifyVipCodeInDb(code: string): Promise<{ valid: boolean; plan?: string }> {
   const cleanCode = code.trim().toUpperCase();
 
-  // Fallback instant codes for local testing and direct sales
+  // Instant fallback codes for offline/direct access
   if (cleanCode === 'SHOWTIME2026' || cleanCode === 'VIP' || cleanCode === 'BARA') {
     return { valid: true, plan: cleanCode === 'VIP' ? 'monthly' : '24h' };
   }
 
-  if (!supabase) {
-    return { valid: false };
-  }
+  if (!supabase) return { valid: false };
 
   try {
     const { data, error } = await supabase
@@ -290,7 +325,6 @@ export async function verifyVipCodeInDb(code: string): Promise<{ valid: boolean;
       return { valid: false };
     }
 
-    // Increment used_count
     await supabase
       .from('vip_codes')
       .update({ used_count: (data.used_count || 0) + 1 })
@@ -298,7 +332,7 @@ export async function verifyVipCodeInDb(code: string): Promise<{ valid: boolean;
 
     return { valid: true, plan: data.plan_type };
   } catch (err) {
-    console.error('[Supabase] Exception in verifyVipCodeInDb:', err);
+    console.warn('[Supabase] Exception in verifyVipCodeInDb:', err);
     return { valid: false };
   }
 }
@@ -311,27 +345,36 @@ export function subscribeToRoomRealtime(
 ): () => void {
   if (!supabase) return () => {};
 
-  const channel = supabase
-    .channel(`room_sync:${roomCode}`)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` },
-      (payload) => {
-        if (payload.new) {
-          onRoomUpdate(payload.new);
+  try {
+    const channel = supabase
+      .channel(`room_sync:${roomCode}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` },
+        (payload) => {
+          if (payload.new) {
+            onRoomUpdate(payload.new);
+          }
         }
-      }
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'players', filter: `room_code=eq.${roomCode}` },
-      () => {
-        onPlayersUpdate();
-      }
-    )
-    .subscribe();
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'players', filter: `room_code=eq.${roomCode}` },
+        () => {
+          onPlayersUpdate();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`[Supabase Realtime] Subscribed to room ${roomCode}`);
+        }
+      });
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    console.warn('[Supabase] Error subscribing to realtime channel:', err);
+    return () => {};
+  }
 }

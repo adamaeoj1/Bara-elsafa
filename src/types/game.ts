@@ -75,6 +75,7 @@ export interface UserProfile {
 
 export type SyncMessageType = 
   | 'ROOM_STATE_SYNC'
+  | 'REQUEST_ROOM_SYNC'
   | 'PLAYER_JOIN'
   | 'PLAYER_LEAVE'
   | 'PLAYER_KICKED'

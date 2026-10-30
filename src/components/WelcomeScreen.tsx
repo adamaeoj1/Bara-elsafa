@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { PlayerColor, UserProfile } from '../types/game';
 import { PLAYER_COLORS } from '../data/categories';
 import { PlayerPawn } from './PlayerPawn';
+import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 import { Sparkles, Play, LogIn, Users, ShieldAlert, KeyRound, ArrowRight } from 'lucide-react';
 
 interface WelcomeScreenProps {
   initialRoomCode?: string;
   initialProfile: UserProfile;
+  isOnline?: boolean;
   onUpdateProfile: (profile: Partial<UserProfile>) => void;
   onCreateRoom: (name: string, color: PlayerColor) => Promise<void>;
   onJoinRoom: (code: string, name: string, color: PlayerColor) => Promise<{ success: boolean; error?: string }>;
@@ -16,6 +18,7 @@ interface WelcomeScreenProps {
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   initialRoomCode = '',
   initialProfile,
+  isOnline = false,
   onUpdateProfile,
   onCreateRoom,
   onJoinRoom,
@@ -73,13 +76,17 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   return (
     <div className="min-h-screen bg-[#F7F4EB] flex flex-col justify-center items-center px-4 py-8 font-cairo select-none">
       <div className="max-w-md w-full flex flex-col gap-5">
+        {/* Top Status Bar */}
+        <div className="flex justify-between items-center px-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-yellow rounded-full border-2 border-black font-black text-xs shadow-brutal-sm">
+            <Sparkles className="w-3.5 h-3.5 text-black fill-black" />
+            <span>لعبة الاستنتاج والذكاء</span>
+          </div>
+          <ConnectionStatusBadge isOnline={isOnline} />
+        </div>
+
         {/* App Title Header */}
         <div className="text-center">
-          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-brand-yellow rounded-full border-3 border-black font-black text-xs shadow-brutal-sm mb-3">
-            <Sparkles className="w-4 h-4 text-black fill-black" />
-            <span>لعبة الاستنتاج والذكاء الاجتماعي</span>
-          </div>
-
           <h1 className="text-4xl font-black text-black tracking-tight flex items-center justify-center gap-2">
             <span>شوتايم</span>
             <span className="text-brand-purple">| برا السالفة</span>
