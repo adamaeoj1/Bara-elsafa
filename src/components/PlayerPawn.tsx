@@ -5,11 +5,14 @@ interface PlayerPawnProps {
   color: PlayerColor | string;
   name?: string;
   isActive?: boolean;
+  isHost?: boolean;
   isAsker?: boolean;
   isAnswerer?: boolean;
   isImpostor?: boolean;
   hasVoted?: boolean;
   isWinner?: boolean;
+  isDead?: boolean;
+  score?: number;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showName?: boolean;
   badge?: string;
@@ -21,10 +24,13 @@ export const PlayerPawn: React.FC<PlayerPawnProps> = ({
   color,
   name,
   isActive = true,
+  isHost = false,
   isAsker = false,
   isAnswerer = false,
   hasVoted = false,
   isWinner = false,
+  isDead = false,
+  score,
   size = 'md',
   showName = true,
   badge,
@@ -45,10 +51,21 @@ export const PlayerPawn: React.FC<PlayerPawnProps> = ({
     <div
       onClick={onClick}
       className={`inline-flex flex-col items-center select-none transition-all duration-300 ${
-        isActive ? 'opacity-100 scale-100' : 'opacity-30 scale-95'
+        isDead
+          ? 'opacity-40 grayscale-[0.4] scale-90'
+          : isActive
+          ? 'opacity-100 scale-100'
+          : 'opacity-35 scale-95'
       } ${onClick ? 'cursor-pointer hover:scale-105 active:scale-95' : ''} ${className}`}
     >
       <div className="relative">
+        {/* Golden Host Crown above pawn */}
+        {isHost && (
+          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 text-xs sm:text-sm filter drop-shadow-[1px_1px_0px_#000] pointer-events-none animate-bounce">
+            👑
+          </div>
+        )}
+
         {/* SVG Neo-Brutalist Pawn Character */}
         <svg
           width={dim.width}
@@ -150,8 +167,15 @@ export const PlayerPawn: React.FC<PlayerPawnProps> = ({
           )}
         </svg>
 
+        {/* Ghost Badge for Eliminated Mafia Players */}
+        {isDead && (
+          <div className="absolute -top-2 -right-1 bg-white/95 text-xs px-1 py-0.5 rounded-full border-2 border-black shadow-brutal-xs flex items-center animate-bounce">
+            👻
+          </div>
+        )}
+
         {/* Floating status badges */}
-        {hasVoted && (
+        {hasVoted && !isDead && (
           <div className="absolute -top-1 -right-1 bg-brand-green text-black font-black text-[11px] px-1.5 py-0.5 rounded-full border-2 border-black shadow-brutal-sm flex items-center gap-0.5 animate-bounce">
             ✓
           </div>
@@ -176,18 +200,26 @@ export const PlayerPawn: React.FC<PlayerPawnProps> = ({
         )}
       </div>
 
-      {/* Player Name & Active Indicator */}
+      {/* Player Name & Score */}
       {showName && name && (
-        <div className="mt-1 flex flex-col items-center max-w-[80px]">
+        <div className="mt-1 flex flex-col items-center max-w-[85px]">
           <span
             className={`font-black truncate max-w-full text-center ${dim.fontSize} ${
-              isActive ? 'text-black' : 'text-gray-600'
+              isDead ? 'line-through text-gray-500' : isActive ? 'text-black' : 'text-gray-600'
             }`}
           >
             {name}
           </span>
+
+          {/* Score Badge */}
+          {typeof score === 'number' && (
+            <span className="text-[9px] font-black bg-brand-yellow text-black px-1.5 py-0.2 rounded-full border border-black shadow-[1px_1px_0px_#000] mt-0.5 whitespace-nowrap">
+              ⭐ {score}
+            </span>
+          )}
+
           {/* Active Colored Underline */}
-          {isActive && (
+          {isActive && !isDead && (
             <div
               className="h-1 w-6 rounded-full mt-0.5 border border-black shadow-[1px_1px_0px_#000]"
               style={{ backgroundColor: color }}

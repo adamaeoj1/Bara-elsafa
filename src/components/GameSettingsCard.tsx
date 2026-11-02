@@ -39,23 +39,35 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
     onUpdateCustomCategory({
       name: customName.trim() || (language === 'ar' ? 'فئة خاصة' : 'Custom Topic'),
       title: customName.trim() || (language === 'ar' ? 'فئة خاصة' : 'Custom Topic'),
-      words: words.length >= 8 ? words : [
-        'كلمة 1', 'كلمة 2', 'كلمة 3', 'كلمة 4',
-        'كلمة 5', 'كلمة 6', 'كلمة 7', 'كلمة 8'
-      ],
+      words:
+        words.length >= 8
+          ? words
+          : ['كلمة 1', 'كلمة 2', 'كلمة 3', 'كلمة 4', 'كلمة 5', 'كلمة 6', 'كلمة 7', 'كلمة 8'],
     });
   };
 
   if (!isHost) return null;
 
-  // Clean summary string (e.g., "25ث • تلقائي" or "25s • Auto")
-  const timerSummary = settings.timerDuration === 0 ? '∞' : `${settings.timerDuration}${language === 'ar' ? 'ث' : 's'}`;
-  const impSummary = settings.impostorCount === 'auto'
-    ? (language === 'ar' ? 'تلقائي' : 'Auto')
-    : `${settings.impostorCount} ${language === 'ar' ? 'إمبوستر' : 'Imp'}`;
+  // Mandatory Fix #5: Safe fallback for timerSeconds
+  const rawTimer = settings?.timer ?? settings?.timerDuration ?? 25;
+  const timerSeconds = typeof rawTimer === 'number' && !Number.isNaN(rawTimer) ? rawTimer : 25;
+
+  const timerLabel =
+    timerSeconds === 0
+      ? '∞'
+      : language === 'ar'
+      ? `${timerSeconds} ثانية`
+      : `${timerSeconds}s`;
+
+  const impLabel =
+    !settings?.impostorCount || settings.impostorCount === 'auto'
+      ? language === 'ar'
+        ? 'تلقائي'
+        : 'Auto'
+      : `${settings.impostorCount} ${language === 'ar' ? 'إمبوستر' : 'Imp'}`;
 
   return (
-    <div className="bg-white rounded-3xl border-3 sm:border-4 border-black p-3.5 shadow-brutal transition-all">
+    <div className="bg-white rounded-3xl border-3 border-black p-4 shadow-brutal transition-all w-full">
       {/* Header Toggle */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
@@ -63,8 +75,8 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
       >
         <div className="flex items-center gap-2">
           <span>{t('settingsTitle')}</span>
-          <span className="text-[10px] bg-brand-yellow px-2 py-0.5 rounded-full border border-black font-black whitespace-nowrap">
-            {timerSummary} • {impSummary}
+          <span className="text-[11px] bg-brand-yellow px-2.5 py-0.5 rounded-full border border-black font-black whitespace-nowrap">
+            {timerLabel} • {impLabel}
           </span>
         </div>
         {isOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
@@ -75,24 +87,24 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
         <div className="mt-3 pt-3 border-t-2 border-black/10 flex flex-col gap-3 text-start animate-fade-in">
           {/* 1. Turn Timer Duration */}
           <div>
-            <label className="text-[11px] font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
+            <label className="text-xs font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
               <Clock className="w-3.5 h-3.5 text-brand-cyan" />
               <span>{t('timerDurationLabel')}</span>
             </label>
             <div className="grid grid-cols-4 gap-1.5">
               {[
-                { val: 15, label: language === 'ar' ? '15ث' : '15s' },
-                { val: 25, label: language === 'ar' ? '25ث' : '25s' },
-                { val: 45, label: language === 'ar' ? '45ث' : '45s' },
+                { val: 15, label: language === 'ar' ? '15 ثانية' : '15s' },
+                { val: 25, label: language === 'ar' ? '25 ثانية' : '25s' },
+                { val: 45, label: language === 'ar' ? '45 ثانية' : '45s' },
                 { val: 0, label: '∞' },
               ].map(({ val, label }) => {
-                const isSelected = settings.timerDuration === val;
+                const isSelected = timerSeconds === val;
                 return (
                   <button
                     key={val}
                     type="button"
-                    onClick={() => onUpdateSettings({ timerDuration: val as any })}
-                    className={`py-1.5 px-1 rounded-xl border-2 border-black text-xs font-black transition-all ${
+                    onClick={() => onUpdateSettings({ timer: val as any, timerDuration: val as any })}
+                    className={`py-2 px-1 rounded-xl border-2 border-black text-xs font-black transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-brand-cyan text-black shadow-brutal-sm scale-[1.02]'
                         : 'bg-[#FAF8F5] text-gray-700 hover:bg-gray-100'
@@ -107,7 +119,7 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
 
           {/* 2. Impostor Count */}
           <div>
-            <label className="text-[11px] font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
+            <label className="text-xs font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
               <Users className="w-3.5 h-3.5 text-brand-pink" />
               <span>{t('impostorCountLabel')}</span>
             </label>
@@ -118,7 +130,8 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
                 { val: 2, label: '2', min: 5 },
                 { val: 3, label: '3', min: 8 },
               ].map(({ val, label, min }) => {
-                const isSelected = settings.impostorCount === val;
+                const currentImp = settings?.impostorCount ?? 'auto';
+                const isSelected = currentImp === val;
                 const isEligible = playerCount >= min || val === 'auto' || val === 1;
 
                 return (
@@ -127,14 +140,20 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
                     type="button"
                     disabled={!isEligible}
                     onClick={() => isEligible && onUpdateSettings({ impostorCount: val as any })}
-                    className={`py-1.5 px-1 rounded-xl border-2 border-black text-xs font-black transition-all ${
+                    className={`py-2 px-1 rounded-xl border-2 border-black text-xs font-black transition-all ${
                       !isEligible
                         ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed opacity-50'
                         : isSelected
-                        ? 'bg-brand-pink text-black shadow-brutal-sm scale-[1.02]'
-                        : 'bg-[#FAF8F5] text-gray-700 hover:bg-gray-100'
+                        ? 'bg-brand-pink text-black shadow-brutal-sm scale-[1.02] cursor-pointer'
+                        : 'bg-[#FAF8F5] text-gray-700 hover:bg-gray-100 cursor-pointer'
                     }`}
-                    title={!isEligible ? (language === 'ar' ? `يحتاج ${min} لاعبين على الأقل` : `Requires ${min}+ players`) : undefined}
+                    title={
+                      !isEligible
+                        ? language === 'ar'
+                          ? `يحتاج ${min} لاعبين على الأقل`
+                          : `Requires ${min}+ players`
+                        : undefined
+                    }
                   >
                     {label}
                   </button>
@@ -145,8 +164,8 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
 
           {/* 3. Impostor Category Hint Toggle */}
           <div>
-            <label className="text-[11px] font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
-              {settings.impostorCategoryHint ? (
+            <label className="text-xs font-black text-gray-800 flex items-center gap-1.5 mb-1.5">
+              {settings?.impostorCategoryHint !== false ? (
                 <Eye className="w-3.5 h-3.5 text-brand-green" />
               ) : (
                 <EyeOff className="w-3.5 h-3.5 text-red-500" />
@@ -155,18 +174,26 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
             </label>
             <button
               type="button"
-              onClick={() => onUpdateSettings({ impostorCategoryHint: !settings.impostorCategoryHint })}
-              className={`w-full p-2 rounded-xl border-2 border-black text-xs font-black transition-all flex items-center justify-between ${
-                settings.impostorCategoryHint
+              onClick={() =>
+                onUpdateSettings({ impostorCategoryHint: !(settings?.impostorCategoryHint !== false) })
+              }
+              className={`w-full p-2.5 rounded-xl border-2 border-black text-xs font-black transition-all flex items-center justify-between cursor-pointer ${
+                settings?.impostorCategoryHint !== false
                   ? 'bg-brand-green/20 border-black text-green-900 shadow-brutal-sm'
                   : 'bg-red-50 border-red-500 text-red-700 shadow-brutal-sm'
               }`}
             >
-              <span>{settings.impostorCategoryHint ? t('impostorHintOn') : t('impostorHintOff')}</span>
+              <span>
+                {settings?.impostorCategoryHint !== false ? t('impostorHintOn') : t('impostorHintOff')}
+              </span>
               <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-black font-black">
-                {settings.impostorCategoryHint 
-                  ? (language === 'ar' ? '✓ تلميح مفعّل' : '✓ Normal') 
-                  : (language === 'ar' ? '💀 الوضع الصعب' : '💀 Hardcore')}
+                {settings?.impostorCategoryHint !== false
+                  ? language === 'ar'
+                    ? '✓ تلميح مفعّل'
+                    : '✓ Normal'
+                  : language === 'ar'
+                  ? '💀 الوضع الصعب'
+                  : '💀 Hardcore'}
               </span>
             </button>
           </div>
@@ -183,7 +210,11 @@ export const GameSettingsCard: React.FC<GameSettingsCardProps> = ({
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 onBlur={handleCustomCategorySave}
-                placeholder={language === 'ar' ? 'مثال: أسماء أصحابنا / ذكريات الصيف' : 'e.g. Friends Nicknames / Campus Spots'}
+                placeholder={
+                  language === 'ar'
+                    ? 'مثال: أسماء أصحابنا / ذكريات الصيف'
+                    : 'e.g. Friends Nicknames / Campus Spots'
+                }
                 className="w-full px-2.5 py-1.5 text-xs font-bold bg-white border-2 border-black rounded-lg outline-none"
               />
 

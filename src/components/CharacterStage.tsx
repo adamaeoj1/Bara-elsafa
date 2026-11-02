@@ -10,6 +10,7 @@ interface CharacterStageProps {
   currentPair?: QuestionPair;
   caughtImpostorId?: string | null;
   winner?: 'IMPOSTOR' | 'CIVILIANS' | null;
+  votes?: Record<string, string>;
 }
 
 export const CharacterStage: React.FC<CharacterStageProps> = ({
@@ -19,30 +20,35 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
   currentPair,
   caughtImpostorId,
   winner,
+  votes = {},
 }) => {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
 
   if (!players || players.length === 0) return null;
 
   // Determine if a player is active based on current phase rules
   const isPlayerActiveInPhase = (player: Player): boolean => {
+    if (player.isAlive === false || player.is_alive === false) return false;
+
     switch (phase) {
       case 'LOBBY':
-        return true;
       case 'ROLE_REVEAL':
+      case 'MAFIA_ROLE_REVEAL':
+      case 'VOTING':
+      case 'MAFIA_VOTING':
+      case 'MAFIA_NIGHT':
+      case 'MAFIA_MORNING_DISCUSSION':
         return true;
       case 'QUESTIONS':
         if (!currentPair) return true;
         return player.id === currentPair.askerId || player.id === currentPair.answererId;
-      case 'VOTING':
-        return true;
       case 'LAST_CHANCE':
         return player.id === caughtImpostorId;
       case 'GAME_OVER':
         if (winner === 'IMPOSTOR') {
-          return player.isImpostor;
+          return Boolean(player.isImpostor || player.is_impostor || player.mafiaRole === 'IMPOSTOR');
         } else if (winner === 'CIVILIANS') {
-          return !player.isImpostor;
+          return !player.isImpostor && !player.is_impostor && player.mafiaRole !== 'IMPOSTOR';
         }
         return true;
       default:
@@ -50,10 +56,9 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
     }
   };
 
-  // Determine layout: 1 row for <= 4 players, 2 rows (3 top / 4 bottom) for > 4 players
-  const isMultiRow = players.length > 4;
-  const topRowPlayers = isMultiRow ? players.slice(0, 3) : players;
-  const bottomRowPlayers = isMultiRow ? players.slice(3) : [];
+  const isMultiRow = players.length > 5;
+  const topRowPlayers = isMultiRow ? players.slice(0, Math.ceil(players.length / 2)) : players;
+  const bottomRowPlayers = isMultiRow ? players.slice(Math.ceil(players.length / 2)) : [];
 
   const youLabel = t('youBadge');
 
@@ -62,11 +67,19 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
     const isAsker = phase === 'QUESTIONS' && currentPair?.askerId === player.id;
     const isAnswerer = phase === 'QUESTIONS' && currentPair?.answererId === player.id;
     const isCaught = phase === 'LAST_CHANCE' && caughtImpostorId === player.id;
-    const isWinnerPawn = phase === 'GAME_OVER' && (
-      (winner === 'IMPOSTOR' && player.isImpostor) ||
-      (winner === 'CIVILIANS' && !player.isImpostor)
-    );
+    const isImp = Boolean(player.isImpostor || player.is_impostor || player.mafiaRole === 'IMPOSTOR');
+    const isWinnerPawn =
+      phase === 'GAME_OVER' &&
+      ((winner === 'IMPOSTOR' && isImp) || (winner === 'CIVILIANS' && !isImp));
     const isMe = player.id === activePlayerId;
+    const isDead = player.isAlive === false || player.is_alive === false;
+
+    const playerVoteValue = player.voted_for ?? player.votedTargetId ?? votes[player.id];
+    const hasCastVote =
+      (phase === 'VOTING' || phase === 'MAFIA_VOTING') &&
+      playerVoteValue !== null &&
+      playerVoteValue !== undefined &&
+      playerVoteValue !== '';
 
     return (
       <div key={player.id} className="relative flex justify-center">
@@ -74,47 +87,47 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
           color={player.color}
           name={player.name}
           isActive={isActive}
+          isHost={Boolean(player.isHost || player.is_host)}
           isAsker={isAsker}
           isAnswerer={isAnswerer}
-          hasVoted={phase === 'VOTING' && player.hasVoted}
+          hasVoted={hasCastVote}
           isWinner={isWinnerPawn || isCaught}
+          isDead={isDead}
+          score={player.score ?? 0}
           size={isMultiRow ? 'sm' : 'md'}
           badge={isMe ? youLabel : undefined}
-          className={isMe ? 'ring-2 ring-black rounded-xl p-1 bg-white/50' : ''}
+          className={isMe ? 'ring-2 ring-black rounded-xl p-1 bg-white/60' : ''}
         />
       </div>
     );
   };
 
   return (
-    <div className="w-full bg-[#EFE9D9] border-t-3 border-black py-2.5 px-3 shadow-[0px_-3px_0px_0px_#000] select-none">
-      <div className="max-w-md mx-auto">
-        {/* Stage Header */}
-        <div className="flex items-center justify-between mb-1.5 px-1 text-[11px] font-black text-gray-700">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-brand-green border border-black animate-pulse" />
-            <span>{t('characterStageTitle', { count: players.length })}</span>
-          </span>
-          <span className="text-[10px] text-gray-500 font-bold">
-            {phase === 'QUESTIONS'
-              ? t('stageHint')
-              : (language === 'ar' ? `أنت معلّم بـ "${youLabel}"` : `You are marked with "${youLabel}"`)}
-          </span>
+    <div className="w-full bg-[#EFE9D9] rounded-2xl border-2 border-black py-3 px-4 shadow-[3px_3px_0px_0px_#000] select-none text-black">
+      {/* Stage Header */}
+      <div className="flex items-center justify-between mb-2 px-1 text-xs font-black text-gray-700">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-brand-green border border-black animate-pulse" />
+          <span>{t('characterStageTitle', { count: players.length })}</span>
+        </span>
+        <span className="text-[11px] text-gray-500 font-bold">
+          {phase === 'QUESTIONS'
+            ? t('stageHint')
+            : phase.startsWith('MAFIA')
+            ? 'مدينة المافيا'
+            : 'برا السالفة'}
+        </span>
+      </div>
+
+      {/* Players Pawns Grid */}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap justify-around items-end min-h-[75px] gap-2">
+          {topRowPlayers.map(renderPawn)}
         </div>
 
-        {/* Players Layout */}
-        {isMultiRow ? (
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-center items-center gap-3">
-              {topRowPlayers.map(renderPawn)}
-            </div>
-            <div className="flex justify-center items-center gap-2.5">
-              {bottomRowPlayers.map(renderPawn)}
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-around items-center">
-            {topRowPlayers.map(renderPawn)}
+        {isMultiRow && bottomRowPlayers.length > 0 && (
+          <div className="flex flex-wrap justify-around items-end min-h-[75px] pt-2 border-t border-black/10 gap-2">
+            {bottomRowPlayers.map(renderPawn)}
           </div>
         )}
       </div>

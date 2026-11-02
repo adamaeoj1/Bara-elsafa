@@ -11,7 +11,7 @@ interface PaywallModalProps {
   onUnlockSuccess: () => void;
 }
 
-const DEFAULT_MASTER_CODES = ['ADAMVIP', 'SHOWTIME2026', 'FREE100', 'ADMIN77', 'VIP', 'BARA'];
+const DEFAULT_MASTER_CODES = ['ADAMVIP', 'BARA2026', 'SHOWTIME2026', 'FREE100', 'ADMIN77', 'VIP', 'BARA'];
 
 export const PaywallModal: React.FC<PaywallModalProps> = ({
   isOpen,
@@ -97,7 +97,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-sm animate-fade-in select-none">
       <div
-        className="relative w-full max-w-sm bg-[#F7F4EB] rounded-3xl border-4 border-black p-4 shadow-brutal-xl text-center max-h-[92vh] overflow-y-auto"
+        className="relative w-full max-w-md bg-[#F7F4EB] rounded-3xl border-4 border-black p-5 shadow-brutal-xl text-center"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -193,7 +193,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             </div>
           </div>
 
-          {/* Plan 2: Showtime Plus Monthly */}
+          {/* Plan 2: Bara Elsalfa VIP Monthly */}
           <div
             onClick={() => setSelectedPlan('monthly')}
             className={`p-2.5 rounded-2xl border-2 sm:border-3 border-black cursor-pointer transition-all flex items-center justify-between ${

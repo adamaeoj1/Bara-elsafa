@@ -11,32 +11,57 @@ export const PLAYER_COLORS: { hex: PlayerColor; labelAr: string; labelEn: string
 ];
 
 export const CATEGORIES: Category[] = [
-  // 1. Moroccan & Global Food (Free)
+  // 1. Authentic Moroccan Food (Free) - 100% Culturally Pure
   {
     id: 'moroccan_food',
-    nameAr: 'الأكل المغربي والعالمي',
-    nameEn: 'Moroccan & Global Food',
-    name: 'الأكل المغربي والعالمي',
+    nameAr: 'الأكل المغربي الأصيل',
+    nameEn: 'Authentic Moroccan Food',
+    name: 'الأكل المغربي الأصيل',
     isLocked: false,
     icon: '🥘',
     wordsAr: [
-      'كسكس', 'طاجين', 'حريرة', 'بسطيلة', 'مسمن', 'بغرير', 'طنجية', 'رفيسة',
-      'شباكية', 'بريوات', 'زعلوك', 'سفنج', 'كبسة', 'شاورما', 'بيتزا', 'برغر',
-      'سوشي', 'تاكو', 'باستا', 'لازانيا', 'كرواسون', 'مشاوي'
+      'كسكس', 'طاجين', 'حريرة', 'بسطيلة', 'مسمن', 'بغرير', 'طنجية مراكشية', 'رفيسة',
+      'شباكية', 'بريوات', 'زعلوك', 'سفنج', 'حرشة', 'سفة مدفونة', 'بيصارة', 'تقليّة',
+      'كرعين', 'خبيزة (بقولة)', 'حوت مقلي', 'مشوي', 'كعب غزال', 'فقاص'
     ],
     wordsEn: [
-      'Couscous', 'Tagine', 'Harira Soup', 'Pastilla', 'Msemen', 'Baghrir', 'Tangia', 'Rfissa',
-      'Chebakia', 'Briouat', 'Zaalouk', 'Sfenj', 'Shawarma', 'Pizza', 'Burger', 'Sushi',
-      'Tacos', 'Pasta', 'Lasagna', 'Croissant', 'Barbecue', 'Paella'
+      'Couscous', 'Tagine', 'Harira', 'Pastilla', 'Msemen', 'Baghrir', 'Tangia', 'Rfissa',
+      'Chebakia', 'Briouat', 'Zaalouk', 'Sfenj', 'Harcha', 'Seffa Medfouna', 'Bissara', 'Tqalia',
+      'Kouraine', 'Khobiza', 'Fried Sardines', 'Mechoui', 'Kaab Ghzal', 'Fekkas'
     ],
     words: [
-      'كسكس', 'طاجين', 'حريرة', 'بسطيلة', 'مسمن', 'بغرير', 'طنجية', 'رفيسة',
-      'شباكية', 'بريوات', 'زعلوك', 'سفنج', 'كبسة', 'شاورما', 'بيتزا', 'برغر',
-      'سوشي', 'تاكو', 'باستا', 'لازانيا', 'كرواسون', 'مشاوي'
+      'كسكس', 'طاجين', 'حريرة', 'بسطيلة', 'مسمن', 'بغرير', 'طنجية مراكشية', 'رفيسة',
+      'شباكية', 'بريوات', 'زعلوك', 'سفنج', 'حرشة', 'سفة مدفونة', 'بيصارة', 'تقليّة',
+      'كرعين', 'خبيزة (بقولة)', 'حوت مقلي', 'مشوي', 'كعب غزال', 'فقاص'
     ],
   },
 
-  // 2. Moroccan Hangout & Vibes (Free)
+  // 2. Global & Fast Food (Free) - Pure International & Fast Food
+  {
+    id: 'global_fast_food',
+    nameAr: 'مطاعم وأكلات عالمية',
+    nameEn: 'Global & Fast Food',
+    name: 'مطاعم وأكلات عالمية',
+    isLocked: false,
+    icon: '🍔',
+    wordsAr: [
+      'شاورما', 'بيتزا', 'برغر', 'سوشي', 'تاكو', 'باستا', 'لازانيا', 'ستيك',
+      'شاورما عربي', 'فلافل', 'كبسة', 'مندي', 'ناتشوز', 'بطاطس مقلية', 'هوت دوغ', 'دونات',
+      'وافل', 'كريب', 'بان كيك', 'آيس كريم', 'دجاج مقلي'
+    ],
+    wordsEn: [
+      'Shawarma', 'Pizza', 'Burger', 'Sushi', 'Tacos', 'Pasta', 'Lasagna', 'Steak',
+      'Arabic Shawarma', 'Falafel', 'Kabsa', 'Mandi', 'Nachos', 'French Fries', 'Hot Dog', 'Donuts',
+      'Waffles', 'Crepe', 'Pancakes', 'Ice Cream', 'Fried Chicken'
+    ],
+    words: [
+      'شاورما', 'بيتزا', 'برغر', 'سوشي', 'تاكو', 'باستا', 'لازانيا', 'ستيك',
+      'شاورما عربي', 'فلافل', 'كبسة', 'مندي', 'ناتشوز', 'بطاطس مقلية', 'هوت دوغ', 'دونات',
+      'وافل', 'كريب', 'بان كيك', 'آيس كريم', 'دجاج مقلي'
+    ],
+  },
+
+  // 3. Moroccan Hangout & Vibes (Free)
   {
     id: 'moroccan_vibes',
     nameAr: 'الجلسة والدارجة المغربية',
@@ -61,7 +86,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // 3. Morocco Cities & Spots (Free)
+  // 4. Morocco Cities & Spots (Free)
   {
     id: 'morocco_places',
     nameAr: 'مدن ومعالم المغرب',
@@ -72,21 +97,21 @@ export const CATEGORIES: Category[] = [
     wordsAr: [
       'إفران', 'مراكش', 'كازابلانكا (الدار البيضاء)', 'الرباط', 'طنجة', 'فاس', 'شفشاون', 'أكادير',
       'الصويرة', 'جامع الفنا', 'مسجد الحسن الثاني', 'شلالات أوزود', 'مرزوكة', 'وليلي', 'عين فيتال', 'صخرة الأسد',
-      'البراق (TGV)', 'جامعة الأخوين', 'الوداد', 'الرجاء', 'مغارة هرقل', 'جبل توبقال'
+      'البراق (TGV)', 'قصبة الأوداية', 'باب بوجلود', 'مضايق تودغى', 'مغارة هرقل', 'جبل توبقال'
     ],
     wordsEn: [
       'Ifrane', 'Marrakech', 'Casablanca', 'Rabat', 'Tangier', 'Fes', 'Chefchaouen', 'Agadir',
       'Essaouira', 'Jemaa el-Fnaa', 'Hassan II Mosque', 'Ouzoud Falls', 'Merzouga Desert', 'Volubilis', 'Ain Vittel', 'Ifrane Lion Stone',
-      'Al Boraq Bullet Train', 'Al Akhawayn University', 'Wydad AC', 'Raja CA', 'Hercules Caves', 'Mount Toubkal'
+      'Al Boraq Bullet Train', 'Kasbah of the Udayas', 'Bab Boujloud', 'Todgha Gorges', 'Hercules Caves', 'Mount Toubkal'
     ],
     words: [
       'إفران', 'مراكش', 'كازابلانكا (الدار البيضاء)', 'الرباط', 'طنجة', 'فاس', 'شفشاون', 'أكادير',
       'الصويرة', 'جامع الفنا', 'مسجد الحسن الثاني', 'شلالات أوزود', 'مرزوكة', 'وليلي', 'عين فيتال', 'صخرة الأسد',
-      'البراق (TGV)', 'جامعة الأخوين', 'الوداد', 'الرجاء', 'مغارة هرقل', 'جبل توبقال'
+      'البراق (TGV)', 'قصبة الأوداية', 'باب بوجلود', 'مضايق تودغى', 'مغارة هرقل', 'جبل توبقال'
     ],
   },
 
-  // 4. Uni Life & Tech (Free)
+  // 5. Uni Life & Tech (Free)
   {
     id: 'uni_tech',
     nameAr: 'حياة الجامعة والتقنية',
@@ -111,7 +136,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // 5. Everyday Objects (Free)
+  // 6. Everyday Objects (Free)
   {
     id: 'daily_objects',
     nameAr: 'أشياء حولنا والبيت',
@@ -136,37 +161,37 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // 6. Football & World Cup (VIP)
+  // 7. Football & World Cup (VIP)
   {
     id: 'football',
-    nameAr: 'كورة والمنتخب 🔒',
-    nameEn: 'Football & World Cup 🔒',
-    name: 'كورة والمنتخب 🔒',
+    nameAr: 'كورة والمنتخب',
+    nameEn: 'Football & World Cup',
+    name: 'كورة والمنتخب',
     isLocked: true,
     icon: '⚽',
     wordsAr: [
       'المنتخب المغربي (أسود الأطلس)', 'أشرف حكيمي', 'ياسين بونو', 'إبراهيم دياز', 'حكيم زياش', 'وليد الركراكي', 'ريال مدريد', 'برشلونة',
       'دوري الأبطال', 'رونالدو', 'ميسي', 'مبابي', 'هالاند', 'فينيسيوس', 'كلاسيكو', 'ركلة جزاء',
-      'تسلل', 'تقنية الفار', 'الكرة الذهبية', 'كأس العالم', 'الهلال', 'النصر'
+      'تسلل', 'تقنية الفار', 'الكرة الذهبية', 'كأس العالم', 'الوداد البيضاوي', 'الرجاء البيضاوي'
     ],
     wordsEn: [
       'Atlas Lions (Morocco NT)', 'Achraf Hakimi', 'Yassine Bounou', 'Brahim Diaz', 'Hakim Ziyech', 'Walid Regragui', 'Real Madrid', 'FC Barcelona',
       'Champions League', 'Cristiano Ronaldo', 'Lionel Messi', 'Kylian Mbappé', 'Erling Haaland', 'Vinicius Jr', 'El Clasico', 'Penalty Kick',
-      'Offside', 'VAR Referee', 'Ballon d\'Or', 'World Cup', 'Al Hilal', 'Al Nassr'
+      'Offside', 'VAR Referee', 'Ballon d\'Or', 'World Cup', 'Wydad AC', 'Raja CA'
     ],
     words: [
       'المنتخب المغربي (أسود الأطلس)', 'أشرف حكيمي', 'ياسين بونو', 'إبراهيم دياز', 'حكيم زياش', 'وليد الركراكي', 'ريال مدريد', 'برشلونة',
       'دوري الأبطال', 'رونالدو', 'ميسي', 'مبابي', 'هالاند', 'فينيسيوس', 'كلاسيكو', 'ركلة جزاء',
-      'تسلل', 'تقنية الفار', 'الكرة الذهبية', 'كأس العالم', 'الهلال', 'النصر'
+      'تسلل', 'تقنية الفار', 'الكرة الذهبية', 'كأس العالم', 'الوداد البيضاوي', 'الرجاء البيضاوي'
     ],
   },
 
-  // 7. Video Games (VIP)
+  // 8. Video Games (VIP)
   {
     id: 'gaming',
-    nameAr: 'ألعاب فيديو 🔒',
-    nameEn: 'Video Games 🔒',
-    name: 'ألعاب فيديو 🔒',
+    nameAr: 'ألعاب فيديو',
+    nameEn: 'Video Games',
+    name: 'ألعاب فيديو',
     isLocked: true,
     icon: '🎮',
     wordsAr: [
@@ -186,12 +211,12 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // 8. Anime & Manga (VIP)
+  // 9. Anime & Manga (VIP)
   {
     id: 'anime',
-    nameAr: 'أنمي ومانجا 🔒',
-    nameEn: 'Anime & Manga 🔒',
-    name: 'أنمي ومانجا 🔒',
+    nameAr: 'أنمي ومانجا',
+    nameEn: 'Anime & Manga',
+    name: 'أنمي ومانجا',
     isLocked: true,
     icon: '⚔️',
     wordsAr: [
@@ -211,12 +236,12 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // 9. Movies & Cinema (VIP)
+  // 10. Movies & Cinema (VIP)
   {
     id: 'movies',
-    nameAr: 'مسلسلات وأفلام 🔒',
-    nameEn: 'Movies & Cinema 🔒',
-    name: 'مسلسلات وأفلام 🔒',
+    nameAr: 'مسلسلات وأفلام',
+    nameEn: 'Movies & Cinema',
+    name: 'مسلسلات وأفلام',
     isLocked: true,
     icon: '🍿',
     wordsAr: [
@@ -236,12 +261,12 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // 10. Travel & World (VIP)
+  // 11. Travel & World (VIP)
   {
     id: 'travel',
-    nameAr: 'دول وسياحة 🔒',
-    nameEn: 'Travel & World 🔒',
-    name: 'دول وسياحة 🔒',
+    nameAr: 'دول وسياحة',
+    nameEn: 'Travel & World',
+    name: 'دول وسياحة',
     isLocked: true,
     icon: '✈️',
     wordsAr: [
@@ -261,12 +286,12 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // 11. Cars & Supercars (VIP)
+  // 12. Cars & Supercars (VIP)
   {
     id: 'cars',
-    nameAr: 'سيارات وسرعة 🔒',
-    nameEn: 'Cars & Supercars 🔒',
-    name: 'سيارات وسرعة 🔒',
+    nameAr: 'سيارات وسرعة',
+    nameEn: 'Cars & Supercars',
+    name: 'سيارات وسرعة',
     isLocked: true,
     icon: '🏎️',
     wordsAr: [
@@ -286,12 +311,12 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // 12. Custom Topic (VIP)
+  // 13. Custom Topic (VIP)
   {
     id: 'custom',
-    nameAr: 'فئة مخصصة ✍️ 🔒',
-    nameEn: 'Custom Topic ✍️ 🔒',
-    name: 'فئة مخصصة ✍️ 🔒',
+    nameAr: 'فئة مخصصة',
+    nameEn: 'Custom Topic',
+    name: 'فئة مخصصة',
     isLocked: true,
     icon: '✍️',
     wordsAr: [
@@ -321,8 +346,8 @@ export function getCategoriesWithLockStatus(
     let localizedWords = lang === 'en' ? [...cat.wordsEn] : [...cat.wordsAr];
 
     if (isCustom && customCategory && (customCategory.name || customCategory.title)) {
-      const customTitle = customCategory.name || customCategory.title;
-      localizedName = `${customTitle} ✍️`;
+      const customTitle = customCategory.name || customCategory.title || (lang === 'en' ? 'Custom Topic' : 'فئة مخصصة');
+      localizedName = customTitle;
       if (customCategory.words && customCategory.words.length >= 8) {
         localizedWords = customCategory.words;
       }

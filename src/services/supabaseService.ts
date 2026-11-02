@@ -1,5 +1,6 @@
-import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
-import { Player, RoomState, GamePhase, PlayerColor } from '../types/game';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Player, RoomState, GamePhase, PlayerColor, MafiaRole, QuestionPair, GameSettings } from '../types/game';
+import { PLAYER_COLORS } from '../data/categories';
 
 const rawUrl = import.meta.env.VITE_SUPABASE_URL;
 const rawKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -11,7 +12,6 @@ export const isSupabaseConfigured = (): boolean => {
   const cleanUrl = rawUrl.trim();
   const cleanKey = rawKey.trim();
 
-  // Validate that strings are not placeholders
   if (
     cleanUrl.includes('your-project') ||
     cleanUrl.includes('placeholder') ||
@@ -44,96 +44,264 @@ export async function testSupabaseConnection(): Promise<boolean> {
   }
 }
 
-// Map DB Room row to RoomState
-export function mapDbRoomToRoomState(dbRoom: any, players: Player[]): RoomState {
+// Normalize settings object so both timer and timerDuration are always valid numbers
+export function normalizeSettings(raw?: any): GameSettings {
+  const timerVal = raw?.timer ?? raw?.timerDuration ?? 25;
+  const validTimer = (typeof timerVal === 'number' && !Number.isNaN(timerVal) ? timerVal : 25) as 15 | 25 | 45 | 0;
   return {
-    roomCode: dbRoom.code,
-    phase: (dbRoom.phase as GamePhase) || 'LOBBY',
-    players,
-    selectedCategoryId: dbRoom.selected_category_id || 'moroccan_food',
-    secretWord: dbRoom.secret_word || '',
-    currentPairIndex: dbRoom.current_pair_index || 0,
-    questionPairs: Array.isArray(dbRoom.question_pairs) ? dbRoom.question_pairs : [],
-    questionTimeRemaining: 25,
-    turnStartedAt: dbRoom.turn_started_at || null,
-    votes: {},
-    votingRevealed: Boolean(dbRoom.voting_revealed),
-    caughtImpostorId: dbRoom.caught_impostor_id || null,
-    lastChanceOptions: Array.isArray(dbRoom.last_chance_options) ? dbRoom.last_chance_options : [],
-    impostorGuess: dbRoom.impostor_guess || null,
-    winner: dbRoom.winner || null,
-    winReason: dbRoom.win_reason || null,
-    roundNumber: dbRoom.round_number || 1,
-    isPremiumRoom: Boolean(dbRoom.is_premium_room),
-    settings: dbRoom.settings || {
-      timerDuration: 25,
-      impostorCount: 'auto',
-      impostorCategoryHint: true,
-    },
-    customCategory: dbRoom.custom_category || undefined,
+    timer: validTimer,
+    timerDuration: validTimer,
+    impostorCount: raw?.impostorCount ?? 'auto',
+    impostorCategoryHint: raw?.impostorCategoryHint !== false,
   };
 }
 
 // Map DB Player row to Player
 export function mapDbPlayerToPlayer(dbPlayer: any): Player {
+  const rawVoted = dbPlayer.voted_for;
+  const votedFor =
+    rawVoted !== undefined && rawVoted !== null && String(rawVoted).trim() !== ''
+      ? String(rawVoted).trim()
+      : null;
+
+  const isAlive = dbPlayer.is_alive !== false;
+  const score = typeof dbPlayer.score === 'number' && !Number.isNaN(dbPlayer.score) ? dbPlayer.score : 0;
+  const roundPts =
+    typeof dbPlayer.round_points === 'number' && !Number.isNaN(dbPlayer.round_points)
+      ? dbPlayer.round_points
+      : 0;
+  const mafiaRole: MafiaRole =
+    (dbPlayer.mafia_role as MafiaRole) || (dbPlayer.is_impostor ? 'IMPOSTOR' : 'CIVILIAN');
+  const isHost = Boolean(dbPlayer.is_host);
+  const isImpostor = Boolean(dbPlayer.is_impostor) || mafiaRole === 'IMPOSTOR';
+
   return {
     id: dbPlayer.id,
+    room_code: dbPlayer.room_code,
     name: dbPlayer.name,
-    color: dbPlayer.color as PlayerColor,
-    isHost: Boolean(dbPlayer.is_host),
-    isImpostor: Boolean(dbPlayer.is_impostor),
-    impostorPartnerId: dbPlayer.impostor_partner_id || undefined,
-    hasVoted: Boolean(dbPlayer.has_voted),
-    votedTargetId: dbPlayer.voted_target_id || undefined,
-    createdAt: dbPlayer.created_at,
+    color: (dbPlayer.color as PlayerColor) || PLAYER_COLORS[0].hex,
+    isHost,
+    is_host: isHost,
+    isImpostor,
+    is_impostor: isImpostor,
+    mafiaRole,
+    mafia_role: mafiaRole,
+    isAlive,
+    is_alive: isAlive,
+    voted_for: votedFor,
+    votedTargetId: votedFor || undefined,
+    hasVoted: Boolean(votedFor),
+    score,
+    round_points: roundPts,
+    roundPointsEarned: roundPts,
+    is_online: dbPlayer.is_online !== false,
   };
 }
+
+// Map DB Room row + Players to RoomState
+export function mapDbRoomToRoomState(dbRoom: any, players: Player[]): RoomState {
+  let rolesFromPairs: Record<string, MafiaRole> | undefined = undefined;
+  let votesFromPairs: Record<string, string> = {};
+  let qPairs: QuestionPair[] = [];
+
+  if (dbRoom.question_pairs && typeof dbRoom.question_pairs === 'object') {
+    if (Array.isArray(dbRoom.question_pairs)) {
+      qPairs = dbRoom.question_pairs;
+    } else {
+      rolesFromPairs = dbRoom.question_pairs.roles;
+      votesFromPairs = dbRoom.question_pairs.votes || {};
+      qPairs = Array.isArray(dbRoom.question_pairs.pairs) ? dbRoom.question_pairs.pairs : [];
+    }
+  }
+
+  const mafiaState = dbRoom.mafia_state && typeof dbRoom.mafia_state === 'object' ? dbRoom.mafia_state : {};
+  const rolesFromMafiaState = mafiaState.roles as Record<string, MafiaRole> | undefined;
+  const partnerMap = mafiaState.partners as Record<string, string> | undefined;
+
+  const votes: Record<string, string> = {};
+
+  const mappedPlayers: Player[] = players.map((p) => {
+    const role: MafiaRole =
+      p.mafia_role ||
+      p.mafiaRole ||
+      (rolesFromMafiaState && rolesFromMafiaState[p.id]) ||
+      (rolesFromPairs && rolesFromPairs[p.id]) ||
+      (p.isImpostor ? 'IMPOSTOR' : 'CIVILIAN');
+
+    const isImp = Boolean(p.isImpostor || p.is_impostor || role === 'IMPOSTOR');
+    const rawVote = p.voted_for ?? p.votedTargetId ?? votesFromPairs[p.id] ?? null;
+    const cleanVote = rawVote !== null && rawVote !== undefined && String(rawVote).trim() !== '' ? String(rawVote) : null;
+
+    if (cleanVote) {
+      votes[p.id] = cleanVote;
+    }
+
+    const isAlive = p.is_alive !== false && p.isAlive !== false;
+    const score = typeof p.score === 'number' ? p.score : 0;
+    const roundPts = typeof p.round_points === 'number' ? p.round_points : (p.roundPointsEarned ?? 0);
+
+    return {
+      ...p,
+      isHost: Boolean(p.isHost || p.is_host || (dbRoom.host_id && dbRoom.host_id === p.id)),
+      is_host: Boolean(p.isHost || p.is_host || (dbRoom.host_id && dbRoom.host_id === p.id)),
+      isImpostor: isImp,
+      is_impostor: isImp,
+      impostorPartnerId: p.impostorPartnerId || (partnerMap && partnerMap[p.id]) || undefined,
+      mafiaRole: role,
+      mafia_role: role,
+      isAlive,
+      is_alive: isAlive,
+      voted_for: cleanVote,
+      votedTargetId: cleanVote || undefined,
+      hasVoted: Boolean(cleanVote),
+      score,
+      round_points: roundPts,
+      roundPointsEarned: roundPts,
+    };
+  });
+
+  const normalizedSettings = normalizeSettings(dbRoom.settings);
+
+  return {
+    roomCode: dbRoom.code,
+    phase: (dbRoom.phase as GamePhase) || 'LOBBY',
+    gameMode: dbRoom.game_mode || 'OUT_OF_THE_LOOP',
+    players: mappedPlayers,
+    selectedCategoryId: dbRoom.category || 'moroccan_food',
+    secretWord: dbRoom.secret_word || '',
+    currentPairIndex: dbRoom.current_pair_index || 0,
+    questionPairs: qPairs,
+    questionTimeRemaining: normalizedSettings.timerDuration || 25,
+    turnStartedAt: dbRoom.turn_started_at || null,
+    votes,
+    votingRevealed: Boolean(dbRoom.votes_revealed),
+    caughtImpostorId: dbRoom.caught_impostor_id || null,
+    lastChanceOptions: Array.isArray(dbRoom.word_options) ? dbRoom.word_options : [],
+    impostorGuess: dbRoom.impostor_guess || null,
+    winner: dbRoom.winner || null,
+    winReason: dbRoom.win_reason || null,
+    roundNumber: mafiaState.roundNumber || 1,
+    isPremiumRoom: Boolean(dbRoom.is_premium_room),
+    settings: normalizedSettings,
+    customCategory: dbRoom.settings?.customCategory || undefined,
+    lastImpostorIds: Array.isArray(dbRoom.last_impostor_ids) ? dbRoom.last_impostor_ids : [],
+    usedWords: Array.isArray(dbRoom.used_words) ? dbRoom.used_words : [],
+    mafiaNightVictimId: mafiaState.victimId ?? null,
+    mafiaNightProtectedId: mafiaState.protectedId ?? null,
+    mafiaNightInvestigatedId: mafiaState.investigatedId ?? null,
+    mafiaNightKilledPlayerId: mafiaState.killedPlayerId ?? null,
+    mafiaNightSaved: Boolean(mafiaState.saved),
+    mafiaExiledPlayerId: mafiaState.exiledPlayerId ?? null,
+    mafiaRound: mafiaState.round ?? 1,
+    mafiaNightTimeRemaining: 30,
+    mafiaDiscussionTimeRemaining: 60,
+  };
+}
+
+// Allowed columns in public.rooms per strict schema
+const ALLOWED_ROOM_COLUMNS = new Set([
+  'code',
+  'host_id',
+  'phase',
+  'game_mode',
+  'category',
+  'secret_word',
+  'question_pairs',
+  'current_pair_index',
+  'turn_started_at',
+  'votes_revealed',
+  'caught_impostor_id',
+  'word_options',
+  'impostor_guess',
+  'winner',
+  'win_reason',
+  'is_premium_room',
+  'settings',
+  'mafia_state',
+  'used_words',
+  'last_impostor_ids',
+]);
 
 // 1. Create Room in Supabase
 export async function createRoomInDb(roomCode: string, hostPlayer: Player, categoryId: string): Promise<boolean> {
   if (!supabase) return false;
 
-  try {
-    // Delete any stale room or players with this code first to prevent constraint collision
-    await supabase.from('players').delete().eq('room_code', roomCode);
-    await supabase.from('rooms').delete().eq('code', roomCode);
+  const cleanCode = roomCode.trim().replace(/[^0-9]/g, '');
 
-    const { error: roomError } = await supabase.from('rooms').insert({
-      code: roomCode,
+  try {
+    await supabase.from('players').delete().eq('room_code', cleanCode);
+    await supabase.from('rooms').delete().eq('code', cleanCode);
+
+    const roomPayload = {
+      code: cleanCode,
+      host_id: hostPlayer.id,
       phase: 'LOBBY',
-      selected_category_id: categoryId,
+      game_mode: 'OUT_OF_THE_LOOP',
+      category: categoryId || 'moroccan_food',
       secret_word: '',
-      current_pair_index: 0,
       question_pairs: [],
+      current_pair_index: 0,
       turn_started_at: null,
-      voting_revealed: false,
+      votes_revealed: false,
       caught_impostor_id: null,
-      last_chance_options: [],
+      word_options: [],
       impostor_guess: null,
       winner: null,
       win_reason: null,
-      round_number: 1,
       is_premium_room: false,
-    });
+      settings: {
+        timer: 25,
+        timerDuration: 25,
+        impostorCount: 'auto',
+        impostorCategoryHint: true,
+      },
+      mafia_state: {},
+      used_words: [],
+      last_impostor_ids: [],
+    };
+
+    let { error: roomError } = await supabase.from('rooms').insert(roomPayload);
 
     if (roomError) {
-      console.warn('[Supabase] Error creating room in DB:', roomError);
-      return false;
+      console.warn('[Supabase] Initial room insert failed, retrying minimal payload:', roomError.message);
+      const minimalPayload = {
+        code: cleanCode,
+        host_id: hostPlayer.id,
+        phase: 'LOBBY',
+        category: categoryId || 'moroccan_food',
+      };
+      const { error: retryError } = await supabase.from('rooms').insert(minimalPayload);
+      if (retryError) {
+        console.error('[Supabase] Minimal room insert also failed:', retryError.message);
+        return false;
+      }
     }
 
     const { error: playerError } = await supabase.from('players').insert({
       id: hostPlayer.id,
-      room_code: roomCode,
+      room_code: cleanCode,
       name: hostPlayer.name,
       color: hostPlayer.color,
       is_host: true,
       is_impostor: false,
-      has_voted: false,
+      mafia_role: 'CIVILIAN',
+      is_alive: true,
+      voted_for: null,
+      score: 0,
+      round_points: 0,
+      is_online: true,
     });
 
     if (playerError) {
-      console.warn('[Supabase] Error inserting host player in DB:', playerError);
-      return false;
+      console.warn('[Supabase] Host insert failed, retrying minimal player:', playerError.message);
+      await supabase.from('players').insert({
+        id: hostPlayer.id,
+        room_code: cleanCode,
+        name: hostPlayer.name,
+        color: hostPlayer.color,
+        is_host: true,
+        is_online: true,
+      });
     }
 
     return true;
@@ -148,10 +316,11 @@ export async function fetchRoomDataFromDb(roomCode: string): Promise<{ room: any
   if (!supabase) return null;
 
   try {
+    const cleanCode = roomCode.trim().replace(/[^0-9]/g, '');
     const { data: roomData, error: roomError } = await supabase
       .from('rooms')
       .select('*')
-      .eq('code', roomCode)
+      .eq('code', cleanCode)
       .maybeSingle();
 
     if (roomError || !roomData) return null;
@@ -159,12 +328,18 @@ export async function fetchRoomDataFromDb(roomCode: string): Promise<{ room: any
     const { data: playersData, error: playersError } = await supabase
       .from('players')
       .select('*')
-      .eq('room_code', roomCode)
-      .order('created_at', { ascending: true });
+      .eq('room_code', cleanCode);
 
     if (playersError) return null;
 
     const players = (playersData || []).map(mapDbPlayerToPlayer);
+    // Keep host first, then stable by ID
+    players.sort((a, b) => {
+      if (a.isHost && !b.isHost) return -1;
+      if (!a.isHost && b.isHost) return 1;
+      return a.id.localeCompare(b.id);
+    });
+
     return { room: roomData, players };
   } catch (err) {
     console.warn('[Supabase] Exception in fetchRoomDataFromDb:', err);
@@ -173,14 +348,25 @@ export async function fetchRoomDataFromDb(roomCode: string): Promise<{ room: any
 }
 
 // 3. Join Room
-export async function joinRoomInDb(roomCode: string, player: Player): Promise<{ success: boolean; error?: string; room?: any; players?: Player[] }> {
-  if (!supabase) return { success: false, error: 'Database not connected' };
+export async function joinRoomInDb(
+  roomCode: string,
+  player: Player,
+  language: 'ar' | 'en' = 'ar'
+): Promise<{ success: boolean; error?: string; room?: any; players?: Player[] }> {
+  if (!supabase) {
+    return {
+      success: false,
+      error: language === 'en' ? 'Database not connected' : 'قاعدة البيانات غير متصلة',
+    };
+  }
 
   try {
+    const cleanCode = roomCode.trim().replace(/[^0-9]/g, '');
+
     const { data: roomData, error: roomError } = await supabase
       .from('rooms')
       .select('*')
-      .eq('code', roomCode)
+      .eq('code', cleanCode)
       .maybeSingle();
 
     if (roomError) {
@@ -188,40 +374,89 @@ export async function joinRoomInDb(roomCode: string, player: Player): Promise<{ 
     }
 
     if (!roomData) {
-      return { success: false, error: 'ROOM_NOT_FOUND' };
+      return {
+        success: false,
+        error:
+          language === 'en'
+            ? 'Room does not exist! Please check the 4-digit room code.'
+            : 'الغرفة غير موجودة! تأكد من رمز الغرفة الصحيح.',
+      };
     }
 
     if (roomData.phase !== 'LOBBY') {
-      return { success: false, error: 'اللعبة قد بدأت بالفعل في هذه الغرفة! انتظر حتى تنتهي.' };
+      return {
+        success: false,
+        error:
+          language === 'en'
+            ? 'Game has already started in this room!'
+            : 'اللعبة بدأت بالفعل في هذه الغرفة!',
+      };
     }
 
-    // Insert or update player in DB
+    const { data: existingPlayersData } = await supabase
+      .from('players')
+      .select('*')
+      .eq('room_code', cleanCode);
+
+    const existingMe = (existingPlayersData || []).find((ep: any) => ep.id === player.id);
+    const otherPlayers = (existingPlayersData || []).filter((ep: any) => ep.id !== player.id);
+    const usedColors = new Set(otherPlayers.map((ep: any) => ep.color));
+    let finalColor = player.color;
+    if (usedColors.has(finalColor)) {
+      const unused = PLAYER_COLORS.find((c) => !usedColors.has(c.hex));
+      if (unused) {
+        finalColor = unused.hex;
+      }
+    }
+
     const { error: insertError } = await supabase.from('players').upsert({
       id: player.id,
-      room_code: roomCode,
+      room_code: cleanCode,
       name: player.name,
-      color: player.color,
-      is_host: false,
+      color: finalColor,
+      is_host: existingMe ? Boolean(existingMe.is_host) : false,
       is_impostor: false,
-      has_voted: false,
-      voted_target_id: null,
-      last_seen_at: new Date().toISOString(),
-    });
+      mafia_role: 'CIVILIAN',
+      is_alive: true,
+      voted_for: null,
+      score: existingMe?.score ?? 0,
+      round_points: existingMe?.round_points ?? 0,
+      is_online: true,
+    }, { onConflict: 'id' });
 
     if (insertError) {
-      return { success: false, error: insertError.message };
+      console.warn('[Supabase] Upsert error, retrying minimal upsert:', insertError.message);
+      await supabase.from('players').upsert({
+        id: player.id,
+        room_code: cleanCode,
+        name: player.name,
+        color: finalColor,
+        is_host: existingMe ? Boolean(existingMe.is_host) : false,
+        is_online: true,
+      }, { onConflict: 'id' });
     }
 
     const { data: playersData } = await supabase
       .from('players')
       .select('*')
-      .eq('room_code', roomCode)
-      .order('created_at', { ascending: true });
+      .eq('room_code', cleanCode);
 
     const players = (playersData || []).map(mapDbPlayerToPlayer);
+    players.sort((a, b) => {
+      if (a.isHost && !b.isHost) return -1;
+      if (!a.isHost && b.isHost) return 1;
+      return a.id.localeCompare(b.id);
+    });
+
     return { success: true, room: roomData, players };
   } catch (err: any) {
-    return { success: false, error: err?.message || 'حدث خطأ أثناء الانضمام' };
+    return {
+      success: false,
+      error:
+        language === 'en'
+          ? 'An error occurred while connecting to the server'
+          : 'حدث خطأ أثناء الاتصال بالخادم',
+    };
   }
 }
 
@@ -245,14 +480,12 @@ export async function removePlayerFromDb(roomCode: string, playerId: string): Pr
         .from('players')
         .select('id')
         .eq('room_code', roomCode)
-        .order('created_at', { ascending: true })
         .limit(1);
 
       if (remainingPlayers && remainingPlayers.length > 0) {
-        await supabase
-          .from('players')
-          .update({ is_host: true })
-          .eq('id', remainingPlayers[0].id);
+        const newHostId = remainingPlayers[0].id;
+        await supabase.from('players').update({ is_host: true }).eq('id', newHostId);
+        await supabase.from('rooms').update({ host_id: newHostId }).eq('code', roomCode);
       } else {
         await supabase.from('rooms').delete().eq('code', roomCode);
       }
@@ -265,15 +498,35 @@ export async function removePlayerFromDb(roomCode: string, playerId: string): Pr
   }
 }
 
-// 5. Update Room in DB
+// 5. Update Room in DB (strictly filtered to schema columns)
 export async function updateRoomInDb(roomCode: string, fields: Record<string, any>): Promise<boolean> {
   if (!supabase) return false;
 
   try {
+    const cleanPayload: Record<string, any> = {};
+
+    Object.entries(fields).forEach(([key, value]) => {
+      if (key === 'selected_category_id') {
+        cleanPayload.category = value;
+      } else if (key === 'voting_revealed') {
+        cleanPayload.votes_revealed = value;
+      } else if (key === 'last_chance_options') {
+        cleanPayload.word_options = value;
+      } else if (ALLOWED_ROOM_COLUMNS.has(key)) {
+        cleanPayload[key] = value;
+      }
+    });
+
+    if (Object.keys(cleanPayload).length === 0) return true;
+
     const { error } = await supabase
       .from('rooms')
-      .update({ ...fields, updated_at: new Date().toISOString() })
+      .update(cleanPayload)
       .eq('code', roomCode);
+
+    if (error) {
+      console.warn('[Supabase] Error updating room in DB:', error);
+    }
 
     return !error;
   } catch (err) {
@@ -282,23 +535,63 @@ export async function updateRoomInDb(roomCode: string, fields: Record<string, an
   }
 }
 
-// 6. Update Multiple Players
+// 6. Update Single Player Vote Directly in DB
+export async function updatePlayerVoteInDb(playerId: string, targetIdOrSkip: string | null): Promise<boolean> {
+  if (!supabase || !playerId) return false;
+
+  try {
+    const { error } = await supabase
+      .from('players')
+      .update({
+        voted_for: targetIdOrSkip,
+      })
+      .eq('id', playerId);
+
+    if (error) {
+      console.warn('[Supabase] Error updating player vote in DB:', error);
+    }
+    return !error;
+  } catch (err) {
+    console.warn('[Supabase] Exception in updatePlayerVoteInDb:', err);
+    return false;
+  }
+}
+
+// 7. Update Multiple Players in DB (strictly matching public.players columns)
 export async function updatePlayersBatchInDb(players: Player[]): Promise<boolean> {
   if (!supabase || players.length === 0) return false;
 
   try {
-    const updates = players.map((p) => ({
-      id: p.id,
-      is_host: p.isHost,
-      is_impostor: p.isImpostor,
-      impostor_partner_id: p.impostorPartnerId || null,
-      has_voted: p.hasVoted || false,
-      voted_target_id: p.votedTargetId || null,
-    }));
+    await Promise.all(
+      players.map((p) => {
+        const rawVote = p.voted_for !== undefined ? p.voted_for : (p.votedTargetId ?? null);
+        const cleanVote =
+          rawVote !== null && rawVote !== undefined && String(rawVote).trim() !== ''
+            ? String(rawVote).trim()
+            : null;
+        const score = typeof p.score === 'number' && !Number.isNaN(p.score) ? p.score : 0;
+        const roundPts =
+          typeof p.round_points === 'number' && !Number.isNaN(p.round_points)
+            ? p.round_points
+            : typeof p.roundPointsEarned === 'number' && !Number.isNaN(p.roundPointsEarned)
+            ? p.roundPointsEarned
+            : 0;
 
-    for (const update of updates) {
-      await supabase.from('players').update(update).eq('id', update.id);
-    }
+        return supabase!
+          .from('players')
+          .update({
+            is_host: Boolean(p.isHost ?? p.is_host),
+            is_impostor: Boolean(p.isImpostor ?? p.is_impostor),
+            mafia_role: p.mafiaRole || p.mafia_role || (p.isImpostor ? 'IMPOSTOR' : 'CIVILIAN'),
+            is_alive: p.isAlive !== false && p.is_alive !== false,
+            voted_for: cleanVote,
+            score,
+            round_points: roundPts,
+            is_online: true,
+          })
+          .eq('id', p.id);
+      })
+    );
     return true;
   } catch (err) {
     console.warn('[Supabase] Exception in updatePlayersBatchInDb:', err);
@@ -306,12 +599,11 @@ export async function updatePlayersBatchInDb(players: Player[]): Promise<boolean
   }
 }
 
-// 7. Verify VIP / Promo Code
+// 8. Verify VIP / Promo Code
 export async function verifyVipCodeInDb(code: string): Promise<{ valid: boolean; plan?: string }> {
   const cleanCode = code.trim().toUpperCase();
 
-  // Instant fallback codes for offline/direct access
-  if (cleanCode === 'SHOWTIME2026' || cleanCode === 'VIP' || cleanCode === 'BARA') {
+  if (cleanCode === 'BARA2026' || cleanCode === 'SHOWTIME2026' || cleanCode === 'VIP' || cleanCode === 'BARA') {
     return { valid: true, plan: cleanCode === 'VIP' ? 'monthly' : '24h' };
   }
 
@@ -339,11 +631,11 @@ export async function verifyVipCodeInDb(code: string): Promise<{ valid: boolean;
     return { valid: true, plan: data.plan_type };
   } catch (err) {
     console.warn('[Supabase] Exception in verifyVipCodeInDb:', err);
-    return { valid: false };
+    return false ? { valid: false } : { valid: false };
   }
 }
 
-// 8. Subscribe to Room & Players Realtime Changes
+// 9. Subscribe to Room & Players Realtime Changes
 export function subscribeToRoomRealtime(
   roomCode: string,
   onRoomUpdate: (room: any) => void,
@@ -370,11 +662,7 @@ export function subscribeToRoomRealtime(
           onPlayersUpdate();
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`[Supabase Realtime] Subscribed to room ${roomCode}`);
-        }
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);

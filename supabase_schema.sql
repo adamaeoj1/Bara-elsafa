@@ -1,27 +1,29 @@
 -- =========================================================================
--- Showtime / برا السالفة - Production Database Schema (Supabase PostgreSQL)
+-- Bara Elsalfa (برا السالفة) - Production Database Schema (Supabase PostgreSQL)
 -- =========================================================================
 
 -- 1. Create Rooms Table
 CREATE TABLE IF NOT EXISTS public.rooms (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code TEXT NOT NULL UNIQUE,
+  code TEXT PRIMARY KEY,
+  host_id TEXT,
   phase TEXT NOT NULL DEFAULT 'LOBBY',
-  selected_category_id TEXT NOT NULL DEFAULT 'food',
+  game_mode TEXT NOT NULL DEFAULT 'OUT_OF_THE_LOOP',
+  category TEXT NOT NULL DEFAULT 'moroccan_food',
   secret_word TEXT DEFAULT '',
-  current_pair_index INT DEFAULT 0,
   question_pairs JSONB DEFAULT '[]'::JSONB,
+  current_pair_index INT DEFAULT 0,
   turn_started_at TIMESTAMPTZ,
-  voting_revealed BOOLEAN DEFAULT FALSE,
+  votes_revealed BOOLEAN DEFAULT FALSE,
   caught_impostor_id TEXT,
-  last_chance_options JSONB DEFAULT '[]'::JSONB,
+  word_options JSONB DEFAULT '[]'::JSONB,
   impostor_guess TEXT,
   winner TEXT,
   win_reason TEXT,
-  round_number INT DEFAULT 1,
   is_premium_room BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  settings JSONB DEFAULT '{"timer": 25, "timerDuration": 25, "impostorCount": "auto", "impostorCategoryHint": true}'::JSONB,
+  mafia_state JSONB DEFAULT '{}'::JSONB,
+  used_words JSONB DEFAULT '[]'::JSONB,
+  last_impostor_ids JSONB DEFAULT '[]'::JSONB
 );
 
 -- 2. Create Players Table
@@ -32,19 +34,20 @@ CREATE TABLE IF NOT EXISTS public.players (
   color TEXT NOT NULL,
   is_host BOOLEAN DEFAULT FALSE,
   is_impostor BOOLEAN DEFAULT FALSE,
-  impostor_partner_id TEXT,
-  has_voted BOOLEAN DEFAULT FALSE,
-  voted_target_id TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  last_seen_at TIMESTAMPTZ DEFAULT NOW()
+  mafia_role TEXT DEFAULT 'CIVILIAN',
+  is_alive BOOLEAN DEFAULT TRUE,
+  voted_for TEXT,
+  score INT DEFAULT 0,
+  round_points INT DEFAULT 0,
+  is_online BOOLEAN DEFAULT TRUE
 );
 
 -- 3. Create VIP Codes Table for Monetization
 CREATE TABLE IF NOT EXISTS public.vip_codes (
   code TEXT PRIMARY KEY,
-  plan_type TEXT NOT NULL DEFAULT '24h', -- '24h' or 'monthly'
+  plan_type TEXT NOT NULL DEFAULT '24h',
   is_active BOOLEAN DEFAULT TRUE,
-  max_uses INT DEFAULT 100,
+  max_uses INT DEFAULT 1000,
   used_count INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -53,6 +56,7 @@ CREATE TABLE IF NOT EXISTS public.vip_codes (
 INSERT INTO public.vip_codes (code, plan_type, is_active, max_uses)
 VALUES 
   ('SHOWTIME2026', '24h', true, 1000),
+  ('BARA2026', '24h', true, 1000),
   ('VIP', 'monthly', true, 1000),
   ('BARA', '24h', true, 1000)
 ON CONFLICT (code) DO NOTHING;

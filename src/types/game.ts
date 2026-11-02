@@ -1,10 +1,18 @@
+export type GameMode = 'OUT_OF_THE_LOOP' | 'MAFIA';
+
 export type GamePhase = 
   | 'LOBBY' 
+  // Out of the Loop phases
   | 'ROLE_REVEAL' 
   | 'QUESTIONS' 
   | 'VOTING' 
   | 'LAST_CHANCE' 
-  | 'GAME_OVER';
+  | 'GAME_OVER'
+  // Mafia game mode phases
+  | 'MAFIA_ROLE_REVEAL'
+  | 'MAFIA_NIGHT'
+  | 'MAFIA_MORNING_DISCUSSION'
+  | 'MAFIA_VOTING';
 
 export type PlayerColor = 
   | '#B388FF' // Purple
@@ -15,17 +23,34 @@ export type PlayerColor =
   | '#FFAB73' // Orange
   | '#D7B38C'; // Brown
 
+export type MafiaRole = 'IMPOSTOR' | 'DOCTOR' | 'DETECTIVE' | 'CIVILIAN';
+
 export interface Player {
   id: string;
+  room_code?: string;
   name: string;
   color: PlayerColor;
   isHost: boolean;
+  is_host?: boolean;
   isImpostor: boolean;
+  is_impostor?: boolean;
   impostorPartnerId?: string;
   hasVoted?: boolean;
   votedTargetId?: string;
+  voted_for?: string | null;
   isReady?: boolean;
   createdAt?: string;
+  // Competitive scoring
+  score: number;
+  roundPointsEarned: number;
+  round_points?: number;
+  // Mafia mode fields
+  isAlive?: boolean;
+  is_alive?: boolean;
+  mafiaRole?: MafiaRole;
+  mafia_role?: MafiaRole;
+  doctorSelfSavedCount?: number;
+  is_online?: boolean;
 }
 
 export interface QuestionPair {
@@ -34,6 +59,7 @@ export interface QuestionPair {
 }
 
 export interface GameSettings {
+  timer?: 15 | 25 | 45 | 0;
   timerDuration: 15 | 25 | 45 | 0; // 0 = no timer (infinite)
   impostorCount: 'auto' | 1 | 2 | 3;
   impostorCategoryHint: boolean; // true = impostor sees category name, false = hardcore mode
@@ -62,9 +88,17 @@ export interface VoteRecord {
   targetId: string;
 }
 
+export interface EmojiReaction {
+  id: string;
+  playerId: string;
+  emoji: string;
+  timestamp: number;
+}
+
 export interface RoomState {
   roomCode: string;
   phase: GamePhase;
+  gameMode: GameMode;
   players: Player[];
   selectedCategoryId: string;
   secretWord: string;
@@ -83,6 +117,19 @@ export interface RoomState {
   isPremiumRoom?: boolean;
   settings: GameSettings;
   customCategory?: CustomCategory;
+  // Anti-repeat RNG state
+  lastImpostorIds: string[];
+  usedWords: string[];
+  // Mafia specific state
+  mafiaNightVictimId?: string | null;
+  mafiaNightProtectedId?: string | null;
+  mafiaNightInvestigatedId?: string | null;
+  mafiaNightKilledPlayerId?: string | null;
+  mafiaNightSaved?: boolean;
+  mafiaExiledPlayerId?: string | null;
+  mafiaRound?: number;
+  mafiaNightTimeRemaining?: number;
+  mafiaDiscussionTimeRemaining?: number;
 }
 
 export interface UserProfile {
@@ -101,7 +148,10 @@ export type SyncMessageType =
   | 'SUBMIT_GUESS'
   | 'RESET_GAME'
   | 'NEXT_TURN'
-  | 'PREMIUM_ACTIVATED';
+  | 'PREMIUM_ACTIVATED'
+  | 'EMOJI_REACTION'
+  | 'RESET_SCORES'
+  | 'MAFIA_NIGHT_ACTION';
 
 export interface SyncMessage {
   type: SyncMessageType;

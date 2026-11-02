@@ -7,38 +7,14 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  body {
+  html,
+  body,
+  #root {
     background-color: #F7F4EB;
+    min-height: 100vh;
     font-family: 'Cairo', sans-serif;
     color: #000000;
   }
-}
-
-/* 3D Flip Card Utilities */
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-.transform-style-3d {
-  transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.rotate-y-180 {
-  transform: rotateY(180deg);
-}
-
-/* Scrollbar hiding for clean mobile app feel */
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 /* Keyframes & Animations */
@@ -49,4 +25,27 @@
 
 .animate-fade-in {
   animation: fadeIn 0.25s ease-out forwards;
+}
+
+@keyframes reactionFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.2);
+  }
+  80% {
+    opacity: 0.85;
+    transform: translateY(-90px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-140px) scale(0.75);
+  }
+}
+
+.animate-reaction-float {
+  animation: reactionFloat 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
